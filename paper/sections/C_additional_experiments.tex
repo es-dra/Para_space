@@ -1,0 +1,32 @@
+\section*{Appendix C: Additional Experiments}
+\label{sec:appendix_experiments}
+
+\subsection{SIREN Width Ablation}
+
+We vary the hidden dimension of SIREN and measure PC1 variance explained:
+
+\begin{table}[h]
+    \centering
+    \caption{PC1 variance explained vs SIREN hidden dimension.}
+    \label{tab:width_ablation}
+    \begin{tabular}{cccc}
+        \toprule
+        Hidden Dim & Scale PC1 ($\%$) & Rotation PC1 ($\%$) & $\eps_{\mathrm{sym}}$ \\
+        \midrule
+        32 & \todo{result} & \todo{result} & \todo{result} \\
+        64 & \todo{result} & \todo{result} & \todo{result} \\
+        128 & \todo{result} & \todo{result} & \todo{result} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Seed Robustness}
+
+We repeat experiments across 3 random seeds (42, 123, 456) and report standard deviations:
+
+\begin{figure}[h]
+    \centering
+    \todo{placeholder for seed robustness plot}
+    \caption{PC1 variance across random seeds. Error bars show $\pm 1$ standard deviation.}
+    \label{fig:seed_robustness}
+\end{figure}

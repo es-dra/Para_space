@@ -1,0 +1,11 @@
+# Core dependencies
+torch>=1.9.0
+numpy>=1.20.0
+scipy>=1.7.0
+matplotlib>=3.4.0
+opencv-python>=4.5.0
+PyYAML>=5.4.0
+
+# Optional dependencies
+# imageio>=2.15.0  # For animation creation (plot_trajectory_animation)
+# scikit-image>=0.19.0  # For SSIM if needed

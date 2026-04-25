@@ -1,0 +1,28 @@
+\section*{Appendix A: Proofs}
+\label{sec:appendix_theory}
+
+\subsection*{Proof of Proposition 1 (Group Type Dictates Orbit Geometry)}
+
+\begin{Proof}
+Let $X \in \mathfrak{g}$ be the generator of a one-parameter subgroup $\exp(tX)$.
+The tangent map $J_X$ satisfies the exponential map relation:
+\begin{equation}
+    \exp_*(tX) = e^{t J_X},
+\end{equation}
+where $\exp_*$ denotes the pushforward on the parameter manifold.
+
+For $\mathfrak{g}_s \cong \mathbb{R}$ (scale group), $X$ has real eigenvalues $\{\lambda_i\}$.
+Thus $e^{t\lambda_i}$ grows or decays monotonically in $t$, yielding open trajectories.
+
+For $\mathfrak{so}(2) \cong \mathbb{R}$ (rotation group), $X$ has imaginary eigenvalues $\{\pm ik\}$.
+Thus $e^{t(\pm ik)} = e^{\pm itk}$ oscillates periodically with period $2\pi/k$, yielding closed elliptical trajectories.
+\qed
+\end{Proof}
+
+\subsection*{Proof of Perturbation Stability Lemma}
+
+\begin{Proof}
+Let $\tilde{J}_X = J_X + E$ where $\|E\| \le \delta \|J_X\|$.
+By the stability theory of Kazhdan representations~\citep{kazhdan2012lovasz}, there exists an orthogonal $Q$ such that $Q^\top \tilde{J}_X Q$ is block-diagonal with error $O(\delta)$.
+\qed
+\end{Proof}

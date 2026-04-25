@@ -1,0 +1,58 @@
+\section{Theoretical Framework}
+\label{sec:theory}
+
+\subsection{Tangent Space Spectral Structure and Group Type Constraints}
+\label{sec:spectral}
+
+The tangent space $T_{\theta^*(f)}\Theta$ decomposes naturally according to the eigenvalues of $J_X$.
+
+For the \textbf{scale group $\mathbb{R}^+$}, $J_{\mathrm{scale}}$ has real eigenvalues $\{\lambda_i\}$, yielding a decomposition into:
+\begin{itemize}
+    \item 1D exponential stretching submanifold (eigenvalue direction)
+    \item Remaining eigenspace (invariant under scaling)
+\end{itemize}
+
+For the \textbf{rotation group $\SO(2)$}, $J_{\mathrm{rot}}$ has purely imaginary conjugate eigenvalues $\pm ik$, yielding:
+\begin{itemize}
+    \item 2D rotation submanifold (spanned by $\cos$ and $\sin$ modes)
+    \item 1D invariant radial submanifold (center of rotation)
+\end{itemize}
+
+This spectral decomposition is independent of any global linear equivariance assumption and is compatible with the NTK local linearization framework.
+
+\subsection{Perturbation Stability Lemma: Bridging Theory and Empirics}
+\label{sec:perturbation}
+
+We do not assume exact equivariance.
+The world is noisy: approximate symmetries, finite-width networks, and optimization noise mean the Lie algebra homomorphism $[J_X, J_Y] \approx J_{[X,Y]}$ holds only approximately.
+
+Intuitively, if the symmetry error $\eps_{\mathrm{sym}}$ is small, the tangent map $J_X$ behaves as if it came from an exact representation, up to a rotation of the tangent space basis.
+The error does not contaminate the entire structure; it appears only as a bounded perturbation in a suitably chosen orthonormal basis.
+Geometrically: the orbit looks like a true group orbit locally, and deviations from ideal behavior are confined to a predictable, small neighborhood.
+
+Formally, based on stability theory for approximate representations (Ulam/Kazhdan frameworks), we establish:
+
+\begin{prop}[Perturbation Stability Bound]
+If $\eps_{\mathrm{sym}} < \delta$, then there exists an orthogonal transformation $Q$ such that $Q^\top J_X Q$ has block-diagonal error $O(\delta)$.
+\end{prop}
+
+This enables us to convert the idealized theory into \textbf{quantifiable empirical bounds}:
+the observed orbital regularity strictly corresponds to optimization phases where $\delta < 0.1$.
+We report empirical $\delta$ convergence curves in the experiments section.
+
+\input{figures/fig_perturbation_bound}
+
+\subsection{MAML Alignment Effect: Decoupled Explanation}
+\label{sec:maml_alignment}
+
+\textbf{MAML does not create orbits; it only makes them explicit.}
+The orbit itself is created by the signal transformation $T_g$ acting on $f$---that is a geometric fact independent of any learning algorithm.
+What MAML does is shape the empirical NTK landscape so that the local linearization of the network around the meta-initialization aligns with the true orbital tangents $J_X$.
+By maximizing gradient coherence across tasks in the outer loop, MAML drives the NTK principal eigenvectors toward $J_X$ directions, thereby accelerating $\eps_{\mathrm{sym}}$ shrinkage.
+
+Theoretical structure is independent of the optimizer;
+MAML and NTK analysis serve only as \textbf{geometric explicitation probes}, not as causal sources of the orbital structure.
+
+This decoupled explanation clarifies the role of meta-learning in our framework and distinguishes our contribution from pure optimization analysis.
+
+\input{figures/fig_maml_ntk_alignment}

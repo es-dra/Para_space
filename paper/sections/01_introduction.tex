@@ -1,0 +1,74 @@
+\section{Introduction}
+\label{sec:intro}
+
+\input{figures/fig_motivation}
+
+Consider a SIREN network~\citep{sitzmann2020siren} trained to overfit a single photograph.
+The network has roughly 25,000 parameters.
+Now scale that photograph by factors of $0.5, 0.7, 0.9, 1.1, 1.3, 1.5$---a range wide enough to capture meaningful variation while avoiding extreme distortion---and retrain from scratch each time.
+Do the resulting weight vectors scatter randomly through parameter space, or do they follow a pattern?
+This deceptively simple question is the starting point of everything that follows.
+
+Implicit neural representations (INRs) have emerged as a unified framework for image super-resolution~\citep{li2021learning}, neural radiance fields~\citep{mildenhall2020nerf}, and signal compression~\citep{chen2022coin, dupont2022coinpp}.
+An INR encodes a discrete signal as a continuous function $f_\theta: \mathbf{x} \mapsto \mathbf{y}$, where $\theta$ is optimized via gradient descent to fit observed data.
+In visual and physical modeling, target signals are naturally transformed by continuous geometric operations: scale changes, rotations, translations, and more.
+The key observation motivating this work is that when a signal undergoes such a transformation, its optimal INR parameters do not wander arbitrarily---they trace structured trajectories.
+
+Existing work on INR symmetries has followed two paths.
+The first enforces equivariance at the architecture level, designing networks where $f_\theta(T_g[\mathbf{x}]) = T'_g[f_\theta(\mathbf{x})]$ holds by construction.
+This is a strong inductive bias but requires domain-specific design for each transformation group.
+The second studies horizontal symmetries in weight space: swapping neurons or scaling activations produces a different weight vector that represents the \emph{same} function.
+Both paths address the question of how to constrain or exploit parameter space structure, but neither asks the more fundamental question we pursue here.
+
+\begin{question*}
+When the target signal $f$ undergoes a group transformation $T_g$, how does the optimal parameter $\theta^*$ move in the high-dimensional weight space?
+\end{question*}
+
+We call this the vertical perspective because it tracks parameter motion \emph{across} different signal functions, rather than equivalence classes \emph{within} a single function.
+The trajectory reveals the intrinsic coupling between the optimization landscape and the geometry of the signal transformation.
+Understanding it opens doors to better meta-learning, more efficient compression, and principled initialization strategies.
+
+\subsection{Notation}
+
+We denote by $G$ a Lie group with Lie algebra $\mathfrak{g}$ and exponential map $\exp: \mathfrak{g} \to G$.
+For a signal $f$ and transformation $T_g$, $\theta^*(f)$ is the global minimizer of the reconstruction loss.
+The tangent space at $\theta^*(f)$ is $T_{\theta^*(f)}\Theta$, and $J_X(f)$ denotes the orbit tangent vector for $X \in \mathfrak{g}$, defined as $J_X(f) := \frac{d}{dt}\theta^*(T_{\exp(tX)}[f])\big|_{t=0}$.
+The symmetry error $\eps_{\mathrm{sym}}(X)$ measures how far the true trajectory deviates from the exponential map on the tangent space.
+
+\input{figures/fig_orbit_geometry}
+
+\subsection{The Low-Dimensionality Mystery in COIN++}
+
+The compression framework COIN++~\citep{dupont2022coinpp} stores not the full weights of an image-fitted network, but only a small \emph{modulation} vector---a residual shift applied to a meta-learned base network.
+This approach achieves impressive compression ratios, far smaller than the raw weight dimension would suggest.
+The implicit assumption is that the space of meaningful modulations is low-dimensional.
+But this assumption lacks theoretical justification.
+
+Our work provides it.
+We show that signal transformations induce low-dimensional manifolds---orbits---in the parameter space of INR weights.
+A modulation vector is precisely a coordinate along the tangent direction of such an orbit.
+COIN++ compresses well because it is effectively storing a small number of coordinates on a low-dimensional orbital manifold, rather than a high-dimensional parameter vector.
+This geometric perspective explains not only why the compression works, but also when it will fail: far from the training manifold, orbits may cease to be low-dimensional, and modulation-based approaches need second-order corrections.
+
+This connection positions our work as a theoretical foundation for the INR-as-data paradigm, bridging empirical success with geometric principle.
+
+\subsection{Contributions}
+
+This paper makes four concrete contributions.
+
+\begin{enumerate}
+    \item We shift the perspective from function-space equivariant constraints to parameter-space local tangent geometry.
+    For the first time, we characterize how signal group transformations induce low-dimensional orbital manifolds in INR weight space, distinguishing the closed elliptical trajectories of compact groups ($\SO(2)$) from the open monotonic paths of non-compact groups ($\mathbb{R}^+$) (\S\ref{sec:theory}).
+
+    \item We prove that the induced tangent map $J_X(f)$ approximately satisfies Lie algebra homomorphism, with deviation bounded by a measurable symmetry error $\delta$.
+    This bridges theoretical predictions with empirical observations: orbital regularity strictly corresponds to optimization phases where $\delta < 0.1$ (\S\ref{sec:theory}).
+
+    \item We introduce a tangent-aware initialization strategy based on Jacobian-Vector Products (JVP) that stays on the orbital manifold during extrapolation.
+    In conditional INR adaptation, this achieves $\ge 30\%$ reduction in inner-loop convergence steps while matching final PSNR (\S\ref{sec:application}).
+
+    \item We provide precise distinctions from related work.
+    EquiGen studies horizontal permutation equivalence (the same function, different weights);
+    we study vertical orbit structure (different functions, trajectory of optimal weights).
+    COIN++ uses modulations empirically; we explain their low-dimensionality theoretically.
+    arXiv:2601.23181 uses IFT to establish data-weight correspondence existence; we use IFT to compute orbital tangent directions (\S\ref{sec:related}).
+\end{enumerate}

@@ -1,0 +1,37 @@
+\section*{Appendix B: Implementation Details}
+\label{sec:appendix_implementation}
+
+\subsection{SIREN Architecture}
+
+The SIREN network is defined as:
+\begin{equation}
+    f_\theta(\mathbf{x}) = W_3 \phi(W_2 \phi(W_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2) + \mathbf{b}_3,
+\end{equation}
+where $\phi(x) = \sin(w_0 x)$ is the periodic activation with $w_0 = 30.0$.
+
+\subsection{Jacobian-Vector Product Approximation}
+
+The tangent vector is approximated via forward-mode automatic differentiation:
+\begin{equation}
+    \mathbf{v}_{\mathrm{tan}} = \frac{\partial \theta^*}{\partial s} \approx \frac{\partial \theta}{\partial s}\Big|_{\theta^*(s_1)},
+\end{equation}
+using PyTorch's \texttt{torch.autograd.functional.jvp}.
+
+\subsection{MAML Configuration}
+
+\begin{table}[h]
+    \centering
+    \caption{MAML hyperparameters used in experiments.}
+    \label{tab:maml_config}
+    \begin{tabular}{lc}
+        \toprule
+        Hyperparameter & Value \\
+        \midrule
+        Meta learning rate & $1e-3$ \\
+        Inner learning rate & $5e-4$ \\
+        Meta steps & 3000 \\
+        Inner steps & 500 \\
+        Fine-tune steps & 3000 \\
+        \bottomrule
+    \end{tabular}
+\end{table}

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(pip3 --version)",
+      "Bash(python3 -m venv /workspace/Para_space/.venv)",
+      "Bash(/workspace/Para_space/.venv/bin/pip install:*)",
+      "Bash(/workspace/Para_space/.venv/bin/python -c \"import torch; print\\('torch:', torch.__version__\\)\")",
+      "Bash(python3:*)",
+      "Bash(nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv)",
+      "Bash(cat /workspace/Para_space/results/P1/*.txt)",
+      "Bash(python experiments/P1_first_layer_theorem/experiment.py --device -1 --max_iter 500)",
+      "Bash(python experiments/P1_first_layer_theorem/experiment.py --device -1 --max_iter 200)",
+      "Bash(timeout 120 python:*)",
+      "Bash(timeout 240 python:*)",
+      "Bash(timeout 300 python:*)",
+      "Bash(timeout 600 python:*)",
+      "Bash(python:*)",
+      "Bash(nvidia-smi --query-gpu=driver_version --format=csv,noheader)",
+      "Bash(tee results/Phase1/FittingDynamics/siren/training.log)"
+    ]
+  }
+}

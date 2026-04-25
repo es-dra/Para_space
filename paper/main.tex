@@ -1,0 +1,82 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{natbib}
+\usepackage{todonotes}
+\usepackage{booktabs}
+\usepackage{siunitx}
+
+\geometry{margin=1in}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+% Theorem environments
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{prop}{Proposition}
+\newtheorem{cor}{Corollary}
+
+% Commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\SO}{\mathrm{SO}}
+\newcommand{\g}{\mathfrak{g}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\eps}{\epsilon}
+\newcommand{\Theta}{\Theta}
+\def\vnat#1{{\boldsymbol{#1}}}
+
+\title{Local Group Orbits in Parameter Space: Tangent Geometry of Implicit Neural Representations}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/00_abstract}
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+\input{sections/01_introduction}
+
+\section{Related Work}
+\label{sec:related}
+\input{sections/02_related}
+
+\section{Problem Formulation}
+\label{sec:formulation}
+\input{sections/03_formulation}
+
+\section{Theoretical Framework}
+\label{sec:theory}
+\input{sections/04_theory}
+
+\section{Experiments}
+\label{sec:experiments}
+\input{sections/05_experiments}
+
+\section{Application: Tangent-Based Fast Adaptation}
+\label{sec:application}
+\input{sections/06_application}
+
+\section{Limitations}
+\label{sec:limitations}
+\input{sections/07_limitations}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\input{sections/08_conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{refs/main}
+
+\end{document}

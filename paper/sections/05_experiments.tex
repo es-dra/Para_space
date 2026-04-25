@@ -1,0 +1,71 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental Setup}
+
+We validate our theory using SIREN networks~\citep{sitzmann2020siren} with $\code{hidden\_dim}=64$, $\code{num\_layers}=4$, and $\code{w0}=30.0$.
+All experiments use the Set5 dataset~\citep{set5} with image size $48\times48$.
+The network is trained to fit transformed images (scale or rotation) with Adam optimizer and cosine annealing.
+
+For each transformation group, we conduct two experimental conditions:
+\begin{itemize}
+    \item \textbf{MAML meta-training}: Meta-learned initialization across the transformation family
+    \item \textbf{Independent training}: Separate training for each transformation parameter
+\end{itemize}
+
+\input{figures/fig_experiment_setup}
+
+\subsection{Baseline Validation}
+
+\begin{table}[t]
+    \centering
+    \caption{Baseline validation results for Phase 1 experiments.
+    PC1 measures the variance explained by the first principal component of the parameter trajectory.
+    Target: PC1 $> 65\%$, PSNR $> 28$ dB.}
+    \label{tab:baseline_results}
+    \begin{tabular}{lcccc}
+        \toprule
+        Experiment & Transform & PC1 ($\%$) & Mean PSNR (dB) & Status \\
+        \midrule
+        S1: Scale MAML & $\mathbb{R}^+$ & \todo{pending} & \todo{pending} & \todo{Pending} \\
+        S2: Scale Independent & $\mathbb{R}^+$ & \todo{pending} & \todo{pending} & \todo{Pending} \\
+        R1: Rotation MAML & $\SO(2)$ & \todo{pending} & \todo{pending} & \todo{Pending} \\
+        R2: Rotation Independent & $\SO(2)$ & \todo{pending} & \todo{pending} & \todo{Pending} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Orbit Regularity Analysis}
+
+We measure orbit regularity via two complementary metrics:
+\begin{itemize}
+    \item \textbf{PC1}: First principal component variance explained (higher $\Rightarrow$ more regular orbit)
+    \item \textbf{Closeness $C$} for rotation orbits: Return distance after $360^\circ$ / expected distance under uniform coverage
+\end{itemize}
+
+\input{figures/fig_pca_results}
+\input{figures/fig_closure_analysis}
+
+\subsection{Extrapolation Validation (S3/R3)}
+\label{sec:extrapolation}
+
+To test the generalization of our tangent predictions, we conduct extrapolation experiments:
+\begin{itemize}
+    \item \textbf{S3}: Scale extrapolation to $s \in \{0.2, 2.0\}$ (outside training range $[0.5, 1.5]$)
+    \item \textbf{R3}: Rotation extrapolation to $\phi = 390^\circ$ (outside training range $[15^\circ, 165^\circ]$)
+\end{itemize}
+
+\input{figures/fig_extrapolation}
+
+\subsection{NTK/Jacobian Axis Alignment}
+\label{sec:ntk_alignment}
+
+We verify that MAML drives the empirical NTK principal axes toward the true orbit tangents $J_X$ by computing cosine similarities between:
+\begin{itemize}
+    \item NTK leading eigenvectors
+    \item Jacobian-Vector Product approximations of $J_X$
+\end{itemize}
+
+\input{figures/fig_ntk_alignment}
+
+\input{figures/fig_symmetry_error}
