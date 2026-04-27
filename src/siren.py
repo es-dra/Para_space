@@ -59,11 +59,11 @@ class SIREN(nn.Module):
             if i == 0:
                 layer = nn.Linear(input_dim, hidden_dim)
                 if use_siren_init:
-                    self._siren_init_layer(layer, w0_initial, is_first=True)
+                    self._siren_init_layer(layer, w0, is_first=True)
             elif i == num_layers:
                 layer = nn.Linear(hidden_dim, output_dim)
                 if use_siren_init:
-                    self._siren_init_layer(layer, w0_initial, is_first=False)
+                    self._siren_init_layer(layer, w0, is_first=False)
             else:
                 layer = nn.Linear(hidden_dim, hidden_dim)
                 if use_siren_init:
@@ -76,33 +76,37 @@ class SIREN(nn.Module):
         """
         Initialize layer weights using SIREN's sinusoidal initialization.
 
-        From Sitzmann et al. (2020):
-        - First layer: b = 0, W ~ N(0, 1/w0²)
-        - Hidden layers: b ~ N(0, 1), W ~ N(0, 1/w0²)
-        - Output layer: b = 0, W ~ N(0, 1)
+        From Sitzmann et al. (2020), Sec 3.2 and Supplement 1.5:
+        - First layer: W ~ U(-1/fan_in, 1/fan_in), b = 0
+          (so pre-activations are approx. unit normal)
+        - Hidden layers: W ~ U(-√(6/(fan_in·w0²)), √(6/(fan_in·w0²))), b = 0
+        - Output layer: same as hidden (linear activation but same init)
 
         Args:
             layer: Linear layer to initialize
-            w0: Frequency parameter
+            w0: Frequency parameter (30.0 default)
             is_first: Whether this is the first layer
         """
         with torch.no_grad():
+            fan_in = layer.weight.size(-1)
             if is_first:
-                # First layer: W ~ N(0, (1/w0)²), b = 0
-                nn.init.normal_(layer.weight, mean=0.0, std=1.0 / w0)
-                nn.init.zeros_(layer.bias)
-            elif layer.out_features == self.output_dim:
-                # Output layer: W ~ N(0, 1), b = 0
-                nn.init.normal_(layer.weight, mean=0.0, std=1.0)
+                # First layer: W ~ U(-1/fan_in, 1/fan_in)
+                bound = 1.0 / fan_in
+                nn.init.uniform_(layer.weight, -bound, bound)
                 nn.init.zeros_(layer.bias)
             else:
-                # Hidden layers: W ~ N(0, (1/w0)²), b ~ N(0, 1)
-                nn.init.normal_(layer.weight, mean=0.0, std=1.0 / w0)
-                nn.init.normal_(layer.bias, mean=0.0, std=1.0)
+                # Hidden / output: W ~ U(-√(6/(fan_in·w0²)), √(6/(fan_in·w0²)))
+                bound = math.sqrt(6.0 / fan_in) / w0
+                nn.init.uniform_(layer.weight, -bound, bound)
+                nn.init.zeros_(layer.bias)
 
     def forward(self, coords: torch.Tensor) -> torch.Tensor:
         """
         Forward pass through SIREN.
+
+        Per Sitzmann et al. (2020): all non-output layers multiply
+        pre-activation by w0 before sin. Output layer is linear.
+        Without the w0 multiplication, variance collapses through layers.
 
         Args:
             coords: Shape (N, input_dim) or (B, N, input_dim)
@@ -111,10 +115,11 @@ class SIREN(nn.Module):
             output: Shape (N, output_dim) or (B, N, output_dim)
         """
         x = coords
-        for i, layer in enumerate(self.layers[:-1]):
+        # All hidden layers: sin(w0 * (Wx + b))
+        for layer in self.layers[:-1]:
             x = layer(x)
-            x = torch.sin(x)
-        # Final layer without activation
+            x = torch.sin(self.w0 * x)
+        # Output layer: linear (no activation, no w0 multiplication)
         x = self.layers[-1](x)
         return x
 
@@ -273,34 +278,3 @@ def get_siren_param_count(
     return total
 
 
-def create_siren_layer(
-    input_dim: int,
-    output_dim: int,
-    w0: float = 30.0,
-    is_first_layer: bool = False,
-    use_siren_init: bool = True,
-) -> Tuple[nn.Linear, nn.Parameter]:
-    """
-    Create a single SIREN layer with proper initialization.
-
-    Args:
-        input_dim: Input dimension
-        output_dim: Output dimension
-        w0: Frequency parameter
-        is_first_layer: Whether this is the first layer
-        use_siren_init: Use SIREN initialization
-
-    Returns:
-        Tuple of (linear_module, bias_parameter)
-    """
-    layer = nn.Linear(input_dim, output_dim)
-
-    if use_siren_init:
-        if is_first_layer:
-            nn.init.uniform_(layer.weight, -w0 / input_dim, w0 / input_dim)
-            nn.init.zeros_(layer.bias)
-        else:
-            nn.init.uniform_(layer.weight, -w0 / output_dim, w0 / output_dim)
-            nn.init.normal_(layer.bias, 0, 1)
-
-    return layer, layer.bias

@@ -32,7 +32,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.siren import SIREN
 from src.datasets import get_image_coordinates
-from src.alignment import flatten_params
+from src.alignment import flatten_params, align_siren_parameters
+from src.spectral import compute_frequency_spectrum, compute_error_spectrum
 from src.utils import set_seed
 from experiments.config import SIREN_CONFIG, DYNAMICS_CONFIG, DATA_CONFIG
 
@@ -95,10 +96,15 @@ def run_siren_dynamics(
     theta_0_flat = flatten_params(theta_0).cpu().numpy()
 
     full_snapshots = [theta_0_flat]
+    param_dicts = [theta_0]  # full dicts for alignment
     snapshot_steps = [0]
     losses = []
     psnrs = []
+    freq_ratios = []
     grad_norms = []
+
+    target_spectrum = compute_frequency_spectrum(image_tensor.cpu().numpy())
+    n_freq_bins = len(target_spectrum)
 
     with torch.no_grad():
         initial_out = model(coords)
@@ -125,19 +131,40 @@ def run_siren_dynamics(
             psnrs.append(psnr_val)
             grad_norms.append(grad_norm)
 
+            recon_np = out.cpu().reshape(C, H, W).clamp(0, 1).numpy()
+            target_np = image_tensor.cpu().numpy()
+            error_spectrum = compute_error_spectrum(target_np, recon_np, n_freq_bins)
+            low_freq_ratio = np.sum(error_spectrum[:n_freq_bins // 2]) / (
+                np.sum(error_spectrum) + 1e-10
+            )
+            freq_ratios.append(low_freq_ratio)
+
             current_flat = flatten_params(model.get_params()).cpu().numpy()
             full_snapshots.append(current_flat)
+            param_dicts.append(model.get_params())
             snapshot_steps.append(step)
 
             delta_norm = np.linalg.norm(current_flat - theta_0_flat)
 
             tqdm.write(
                 f"  Step {step}: loss={loss.item():.6f}, PSNR={psnr_val:.1f} dB, "
-                f"|Δθ|={delta_norm:.4f}, |∇|={grad_norm:.4f}"
+                f"|Δθ|={delta_norm:.4f}, |∇|={grad_norm:.4f}, "
+                f"low-freq={low_freq_ratio:.3f}"
             )
 
     full_snapshots = np.array(full_snapshots)
     n_snapshots = len(snapshot_steps)
+
+    # ── Permutation alignment ────────────────────────────────────────────
+    print("  Aligning parameter trajectory (Hungarian matching + sign flips)...")
+    aligned_dicts = [param_dicts[0]]
+    for i in range(1, len(param_dicts)):
+        a, _ = align_siren_parameters(aligned_dicts[-1], param_dicts[i])
+        aligned_dicts.append(a)
+    full_snapshots_aligned = np.array(
+        [flatten_params(d).cpu().numpy() for d in aligned_dicts]
+    )
+    # ──────────────────────────────────────────────────────────────────────
 
     print(f"\nFinal PSNR: {psnrs[-1]:.1f} dB, Loss: {losses[-1]:.6e}")
     print(f"Snapshots: {n_snapshots}, Params: {n_params:,}")
@@ -148,9 +175,12 @@ def run_siren_dynamics(
         np.savez(
             os.path.join(save_dir, "trajectory.npz"),
             full_snapshots=full_snapshots,
+            full_snapshots_aligned=full_snapshots_aligned,
             snapshot_steps=np.array(snapshot_steps, dtype=np.int64),
             losses=np.array(losses, dtype=np.float32),
             psnrs=np.array(psnrs, dtype=np.float32),
+            freq_ratios=np.array(freq_ratios, dtype=np.float32),
+            target_spectrum=target_spectrum,
             grad_norms=np.array(grad_norms, dtype=np.float32),
         )
 
@@ -164,11 +194,13 @@ def run_siren_dynamics(
             "total_steps": total_steps,
             "snapshot_interval": snapshot_interval,
             "n_snapshots": n_snapshots,
+            "alignment": "hungarian+signflip",
             "initial_psnr": float(initial_psnr),
             "final_psnr": float(psnrs[-1]) if psnrs else 0.0,
             "final_loss": float(losses[-1]) if losses else 0.0,
             "snapshot_steps": snapshot_steps,
             "psnrs": [float(p) for p in psnrs],
+            "freq_ratios": [round(float(f), 4) for f in freq_ratios],
             "grad_norms": [float(g) for g in grad_norms],
         }
         with open(os.path.join(save_dir, "dynamics_summary.json"), "w") as f:
@@ -210,7 +242,7 @@ def main():
             return
 
     save_dir = args.save_dir or os.path.join(
-        "results", "Phase1", "FittingDynamics", "siren"
+        "results", "FittingDynamics", "SIREN"
     )
 
     run_siren_dynamics(

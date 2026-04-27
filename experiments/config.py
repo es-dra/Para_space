@@ -10,25 +10,21 @@ Key insight from N=11 diagnostic:
 import numpy as np
 
 LIIF_CONFIG = {
-    "feature_dim": 64,
-    "hidden_dim": 128,
-    "num_layers": 4,
-    "out_dim": 3,
-    "coord_enc_freqs": 8,
-    "scale_enc_freqs": 8,
-    "modulation": "concat",
-    "encoder_layers": 3,
+    "n_feats": 64,
+    "n_resblocks": 8,
+    "decoder_hidden": 256,
+    "decoder_layers": 3,
+    "local_ensemble": True,
+    "feat_unfold": True,
+    "cell_decode": True,
 }
 
 LTE_CONFIG = {
     "feature_dim": 64,
-    "hidden_dim": 128,
+    "hidden_dim": 256,
     "num_layers": 4,
     "out_dim": 3,
-    "dct_frequencies": 16,
-    "scale_enc_freqs": 8,
-    "modulation": "concat",
-    "encoder_layers": 3,
+    "K": 24,
 }
 
 SIREN_CONFIG = {
@@ -106,6 +102,7 @@ DYNAMICS_CONFIG = {
     "snapshot_interval": 500,
     "lr": 5e-4,
     "image_size": 48,
+    "sr_scale": 4,
     "save_reconstructions": True,
     "reconstruction_interval": 1000,
 }

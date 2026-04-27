@@ -41,15 +41,29 @@ def flatten_encoder_params(model: nn.Module) -> torch.Tensor:
 
 
 def _get_decoder_layer_keys(state_dict: Dict[str, torch.Tensor]) -> List[Tuple[str, str]]:
-    pairs = []
-    i = 0
-    while f"layers.{i}.weight" in state_dict:
-        w_key = f"layers.{i}.weight"
-        b_key = f"layers.{i}.bias"
-        if b_key in state_dict:
-            pairs.append((w_key, b_key))
-        i += 1
-    return pairs
+    """Find all (weight_key, bias_key) pairs for Linear layers in a Sequential decoder.
+
+    Supports two naming conventions used across model implementations:
+      - layers.{i}.weight  (LIIFDecoder, EQ_MLP standard Linear layers)
+      - mlp.{i}.weight     (LTEDecoder)
+
+    Tries 'layers' prefix first, falls back to 'mlp'.
+    Returns an empty list if neither prefix is found.
+    """
+    import re
+    for prefix in ['layers', 'mlp']:
+        pattern = re.compile(rf'^{prefix}\.(\d+)\.weight$')
+        indices = sorted(int(m.group(1)) for key in state_dict
+                         if (m := pattern.match(key)))
+        if indices:
+            pairs = []
+            for i in indices:
+                w_key = f"{prefix}.{i}.weight"
+                b_key = f"{prefix}.{i}.bias"
+                if b_key in state_dict:
+                    pairs.append((w_key, b_key))
+            return pairs
+    return []
 
 
 def hungarian_weight_matching(
@@ -122,6 +136,14 @@ def align_decoder_parameters(
         if is_last:
             continue
 
+        # Column-permute W_t by previous layer's permutation (neuron alignment)
+        if not is_first:
+            prev_idx = layer_idx - 1
+            if sign_vectors.get(prev_idx) is not None:
+                W_t = W_t * sign_vectors[prev_idx].unsqueeze(0)
+            if permutations.get(prev_idx) is not None:
+                W_t = W_t[:, permutations[prev_idx]]
+
         if method == AlignmentMethod.WEIGHT_MATCHING:
             perm, W_t_matched, match_cost = hungarian_weight_matching(W_s, W_t)
             W_t_aligned, signs, sign_cost = align_sign_flips(W_s, W_t_matched)
@@ -138,25 +160,26 @@ def align_decoder_parameters(
 
         theta_aligned[w_key] = W_t_aligned
 
+        # Align bias: permute then sign-flip (same order as align_siren_parameters)
+        b_t = theta_target[b_key].clone()
+        if permutations.get(layer_idx) is not None:
+            b_t = b_t[permutations[layer_idx]]
         if layer_idx in sign_vectors:
-            signs = sign_vectors[layer_idx]
-            theta_aligned[b_key] = theta_target[b_key] * signs
+            b_t = b_t * sign_vectors[layer_idx]
+        theta_aligned[b_key] = b_t
 
-            if permutations.get(layer_idx) is not None:
-                perm = permutations[layer_idx]
-                theta_aligned[b_key] = theta_aligned[b_key][perm]
+        # Propagate sign + permutation to next layer's weight columns
+        if layer_idx + 1 < num_layers:
+            next_w_key, _ = layer_pairs[layer_idx + 1]
+            if next_w_key in theta_target:
+                W_next = theta_target[next_w_key].clone()
+                if layer_idx in sign_vectors:
+                    W_next = W_next * sign_vectors[layer_idx].unsqueeze(0)
+                if permutations.get(layer_idx) is not None:
+                    W_next = W_next[:, permutations[layer_idx]]
+                theta_aligned[next_w_key] = W_next
 
         total_cost += cost
-
-    if num_layers > 1 and method == AlignmentMethod.WEIGHT_MATCHING:
-        last_w_key, last_b_key = layer_pairs[-1]
-        last_layer_idx = num_layers - 1
-        prev_layer_idx = num_layers - 2
-
-        if prev_layer_idx in permutations and permutations[prev_layer_idx] is not None:
-            perm = permutations[prev_layer_idx]
-            W_t = theta_target[last_w_key]
-            theta_aligned[last_w_key] = W_t[:, perm]
 
     avg_cost = total_cost / max(num_layers - 1, 1)
     return theta_aligned, avg_cost
