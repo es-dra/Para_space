@@ -19,6 +19,18 @@ LIIF_CONFIG = {
     "cell_decode": True,
 }
 
+# Reduced config for meaningful trajectory analysis
+# 138K params (20x overparam) vs 910K (132x) in full config
+LIIF_CONFIG_REDUCED = {
+    "n_feats": 32,
+    "n_resblocks": 4,
+    "decoder_hidden": 128,
+    "decoder_layers": 2,
+    "local_ensemble": True,
+    "feat_unfold": True,
+    "cell_decode": True,
+}
+
 LTE_CONFIG = {
     "feature_dim": 64,
     "hidden_dim": 256,
@@ -105,4 +117,35 @@ DYNAMICS_CONFIG = {
     "sr_scale": 4,
     "save_reconstructions": True,
     "reconstruction_interval": 1000,
+}
+
+# ── Geometric snapshot schedules ─────────────────────────────────────────
+# SIREN converges rapidly (4→60+ dB in ~500 steps)
+# Dense early sampling captures the interesting dynamics
+
+def _geometric_snapshots(total_steps: int, base: int = 10, factor: float = 2.0):
+    """Generate geometrically-spaced snapshot steps."""
+    steps = [0]
+    current = base
+    while current <= total_steps:
+        steps.append(current)
+        current = int(current * factor)
+    if steps[-1] != total_steps:
+        steps.append(total_steps)
+    return sorted(set(steps))
+
+
+SIREN_DYNAMICS_CONFIG = {
+    "total_steps": 5000,
+    "snapshot_steps": [0, 5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5000],
+    "lr": 5e-4,
+    "image_size": 48,
+}
+
+LIIF_DYNAMICS_CONFIG = {
+    "total_steps": 25000,
+    "snapshot_steps": [0, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25000],
+    "lr": 5e-4,
+    "image_size": 48,
+    "sr_scale": 4,
 }

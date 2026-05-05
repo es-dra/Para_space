@@ -59,8 +59,3 @@ Without all four, a result is not a scientific artifact.
 
 ---
 
-## 5. Parameter Alignment Requirement
-
-MLP-based INRs have neuron permutation symmetry — the same function can be represented by many weight configurations. Before any PCA or trajectory analysis on MLP parameters, run permutation alignment (Hungarian matching). Without this, PCA sees noise from permutation自由度 rather than genuine geometric structure.
-
-**Invariant**: Every analysis pipeline that computes PCA on MLP parameters must first pass through an alignment step.

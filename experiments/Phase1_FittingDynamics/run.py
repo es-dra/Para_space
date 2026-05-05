@@ -46,7 +46,7 @@ from src.alignment import (
 )
 from src.spectral import compute_frequency_spectrum, compute_error_spectrum
 from src.utils import set_seed
-from experiments.config import LIIF_CONFIG, LTE_CONFIG, DYNAMICS_CONFIG, DATA_CONFIG
+from experiments.config import LIIF_CONFIG, LIIF_CONFIG_REDUCED, LTE_CONFIG, DYNAMICS_CONFIG, LIIF_DYNAMICS_CONFIG, DATA_CONFIG
 
 
 def load_image(image_path, image_size=48, sr_scale=None):
@@ -69,7 +69,7 @@ def load_image(image_path, image_size=48, sr_scale=None):
 
 def create_model(model_type, device):
     if model_type == "liif":
-        return LIIFModel(**LIIF_CONFIG).to(device)
+        return LIIFModel(**LIIF_CONFIG_REDUCED).to(device)
     elif model_type == "lte":
         return LTEModel(**LTE_CONFIG).to(device)
     else:
@@ -96,15 +96,14 @@ def run_dynamics(
     device="cuda",
     save_dir=None,
     total_steps=None,
-    snapshot_interval=None,
     sr_scale=0,
 ):
     set_seed(seed)
     device = torch.device(device)
 
-    cfg = DYNAMICS_CONFIG
+    cfg = LIIF_DYNAMICS_CONFIG
     total_steps = total_steps or cfg["total_steps"]
-    snapshot_interval = snapshot_interval or cfg["snapshot_interval"]
+    snapshot_steps_list = cfg["snapshot_steps"]
     image_size = cfg["image_size"]
     sr_scale = sr_scale or 0
 
@@ -129,7 +128,7 @@ def run_dynamics(
         print(f"  Decoder target: {image_size}x{image_size}")
         print(f"  Scale factor: {sr_scale}x")
     print(f"Total params: {n_params:,} (encoder: {n_encoder:,}, decoder: {n_decoder:,})")
-    print(f"Total steps: {total_steps}, Snapshot every: {snapshot_interval}")
+    print(f"Total steps: {total_steps}, Snapshots: {len(snapshot_steps_list)} (geometric)")
     print(f"{'='*60}")
 
     coords = get_image_coordinates(H, W, normalize="center", device=device).reshape(-1, 2)
@@ -168,7 +167,7 @@ def run_dynamics(
         loss_val = float(loss.detach().cpu())
         losses.append(loss_val)
 
-        if step % snapshot_interval == 0 or step == total_steps:
+        if step in snapshot_steps_list:
             with torch.no_grad():
                 out = model(coords, model_input, scale=sr_scale if sr_scale > 0 else 1.0)
                 mse_val = F.mse_loss(out, target).item()
@@ -247,7 +246,7 @@ def run_dynamics(
             "n_encoder_params": n_encoder,
             "n_decoder_params": n_decoder,
             "total_steps": total_steps,
-            "snapshot_interval": snapshot_interval,
+            "snapshot_steps": snapshot_steps_list,
             "n_snapshots": len(snapshot_steps),
             "alignment": "hungarian+signflip (decoder only)",
             "final_psnr": float(psnrs[-1]) if psnrs else 0.0,
@@ -284,7 +283,6 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--steps", type=int, default=None)
-    parser.add_argument("--snapshot_interval", type=int, default=None)
     parser.add_argument(
         "--sr", type=int, default=0,
         help="Super-resolution scale (e.g. 4 = 48x48 HR from 12x12 LR). 0 = self-recon mode."
@@ -316,7 +314,6 @@ def main():
         device=device,
         save_dir=save_dir,
         total_steps=args.steps,
-        snapshot_interval=args.snapshot_interval,
         sr_scale=args.sr,
     )
 

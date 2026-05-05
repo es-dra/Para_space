@@ -134,6 +134,7 @@ def load_reconstructions(
     model_type: str, save_dir: str, device="cuda",
     image_path="Data/Set5/HR/baby.png",
     image_size=None, sr_scale=None,
+    target_steps=None,
 ):
     """Reconstruct images from trajectory snapshots.
 
@@ -253,22 +254,34 @@ def load_reconstructions(
                   f"(traj={snapshots.shape[1]}, model={total_params})")
             return None, None, None, None
 
-    # Key steps: geometric spacing
+    # Key steps selection: use target_steps if provided, otherwise geometric spacing
     n = len(steps)
-    key_indices = []
-    for i in [0, 1, 2, 3, 5, 10, 20, 30, 50, 75, 99]:
-        if i < n:
-            key_indices.append(i)
-    if key_indices[-1] != n - 1:
-        key_indices[-1] = n - 1
-    key_indices = sorted(set(key_indices))
+    if target_steps is not None:
+        # Find indices matching target_steps
+        steps_array = np.array(steps)
+        key_indices = []
+        for ts in target_steps:
+            idx = np.argmin(np.abs(steps_array - ts))
+            if idx not in key_indices:
+                key_indices.append(idx)
+        key_indices = sorted(key_indices)
+    else:
+        # Fallback: geometric spacing
+        key_indices = []
+        for i in [0, 1, 2, 3, 5, 10, 20, 30, 50, 75, 99]:
+            if i < n:
+                key_indices.append(i)
+        if key_indices[-1] != n - 1:
+            key_indices[-1] = n - 1
+        key_indices = sorted(set(key_indices))
     key_steps = [int(steps[i]) for i in key_indices]
 
     # ── Reconstruct ──
     recon_images = []
-    error_maps = []
+    error_maps = []  # Change-based: recon[i] - recon[i-1]
     psnr_vals = []
     is_siren = model_type_lower == "siren"
+    prev_recon = None
 
     for idx in key_indices:
         raw_params = snapshots[idx]
@@ -295,8 +308,13 @@ def load_reconstructions(
             recon = out.cpu().reshape(C, H, W).permute(1, 2, 0).clamp(0, 1).numpy()
             recon_images.append(recon)
 
-            err = np.abs(recon - (hr_tensor.permute(1, 2, 0).cpu().numpy()))
+            # Change-based error: difference from previous snapshot
+            if prev_recon is None:
+                err = np.abs(recon - (hr_tensor.permute(1, 2, 0).cpu().numpy()))
+            else:
+                err = np.abs(recon - prev_recon)
             error_maps.append(err)
+            prev_recon = recon.copy()
 
     return key_steps, key_indices, recon_images, psnr_vals, error_maps
 
@@ -881,7 +899,14 @@ def main():
                         help="HR image size (auto from summary if available)")
     parser.add_argument("--sr_scale", type=int, default=None,
                         help="SR scale factor (auto from summary if available)")
+    parser.add_argument("--target_steps", type=str, default=None,
+                        help="Comma-separated target steps for snapshots, e.g. '0,500,1000,2000,5000,10000,25000,50000'")
     args = parser.parse_args()
+
+    # Parse target_steps if provided
+    target_steps = None
+    if args.target_steps:
+        target_steps = [int(x) for x in args.target_steps.split(",")]
 
     save_dir = args.save_dir or os.path.join(
         os.path.dirname(args.trajectory), "viz")
@@ -930,6 +955,7 @@ def main():
             args.model, save_dir, device=args.device,
             image_path=args.image,
             image_size=args.image_size, sr_scale=args.sr_scale,
+            target_steps=target_steps,
         )
         if result is not None and result[0] is not None:
             key_steps, key_indices, recon_images, recon_psnrs, error_maps = result

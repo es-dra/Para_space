@@ -52,7 +52,9 @@
       "Bash(nvidia-smi --query-gpu=index,memory.used --format=csv,nounits,noheader)",
       "Bash(CUDA_VISIBLE_DEVICES=1 python experiments/Phase1_FittingDynamics/run.py --model liif --steps 1 --device cuda)",
       "Bash(CUDA_VISIBLE_DEVICES=2 python experiments/Phase1_FittingDynamics/run.py --model lte --steps 1 --device cuda)",
-      "Bash(cat /workspace/Para_space/results/FittingDynamics/PretrainedLIIF*.log)"
+      "Bash(cat /workspace/Para_space/results/FittingDynamics/PretrainedLIIF*.log)",
+      "Read(//workspace/SE-INR/.claude/projects/-workspace-SE-INR/**)",
+      "Read(//workspace/SE-INR/.claude/**)"
     ]
   }
 }

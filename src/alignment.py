@@ -41,11 +41,15 @@ def flatten_encoder_params(model: nn.Module) -> torch.Tensor:
 
 
 def _get_decoder_layer_keys(state_dict: Dict[str, torch.Tensor]) -> List[Tuple[str, str]]:
-    """Find all (weight_key, bias_key) pairs for Linear layers in a Sequential decoder.
+    """Find all (weight_key, bias_key) pairs for standard Linear layers in a Sequential decoder.
 
     Supports two naming conventions used across model implementations:
       - layers.{i}.weight  (LIIFDecoder, EQ_MLP standard Linear layers)
       - mlp.{i}.weight     (LTEDecoder)
+
+    Only returns pairs for standard nn.Linear layers (2D weights).
+    Skips equivariant layers (EQ_linear_input, EQ_linear_output) which have
+    3D/4D weights and no independent neuron permutation symmetry.
 
     Tries 'layers' prefix first, falls back to 'mlp'.
     Returns an empty list if neither prefix is found.
@@ -60,8 +64,12 @@ def _get_decoder_layer_keys(state_dict: Dict[str, torch.Tensor]) -> List[Tuple[s
             for i in indices:
                 w_key = f"{prefix}.{i}.weight"
                 b_key = f"{prefix}.{i}.bias"
+                # Only include standard 2D Linear layers
+                # EQ_linear_input/output have 3D/4D weights and are skipped
                 if b_key in state_dict:
-                    pairs.append((w_key, b_key))
+                    w = state_dict[w_key]
+                    if len(w.shape) == 2:  # Standard nn.Linear
+                        pairs.append((w_key, b_key))
             return pairs
     return []
 
