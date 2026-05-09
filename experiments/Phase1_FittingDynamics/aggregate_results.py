@@ -33,14 +33,27 @@ def compute_pc1_ratio(trajectory_path: str) -> dict:
         else:
             snapshots = data["full_snapshots"]
 
+        n = snapshots.shape[0]
+        if n < 3:
+            return {
+                "n_snapshots": n,
+                "n_params": snapshots.shape[1],
+                "error": "fewer than 3 snapshots; PCA is not meaningful",
+            }
+
         delta = snapshots - snapshots[0]
         centered = delta - delta.mean(axis=0)
         from scipy.linalg import svd
         U, S, Vt = svd(centered, full_matrices=False)
         ev = S ** 2
+        if ev.sum() <= 0:
+            return {
+                "n_snapshots": n,
+                "n_params": snapshots.shape[1],
+                "error": "zero trajectory variance; PCA is not meaningful",
+            }
         ev_ratio = ev / ev.sum()
 
-        n = snapshots.shape[0]
         random_baseline = 100.0 / (n - 1) if n > 1 else 0
 
         return {
@@ -65,6 +78,8 @@ def scan_results(results_dir: str) -> list:
 
     for subdir in sorted(base.iterdir()):
         if not subdir.is_dir():
+            continue
+        if subdir.name.startswith(".") or subdir.name in {"logs", "viz"}:
             continue
 
         # Load summary
@@ -112,6 +127,7 @@ def format_entry(entry: dict) -> dict:
         "pc1_ratio": f'{m.get("pc1_ratio", "?"):.1f}x' if isinstance(m.get("pc1_ratio"), float) else "?",
         "random_bsl": f'{m.get("pc1_baseline_pct", "?"):.1f}%' if isinstance(m.get("pc1_baseline_pct"), float) else "?",
         "alignment": s.get("alignment", "none"),
+        "status": m.get("error", "ok") if m else "missing trajectory",
     }
 
 
@@ -132,7 +148,7 @@ def main():
 
     if args.format == "csv":
         keys = ["model", "image", "final_psnr", "final_loss",
-                "pc1_pct", "pc1_ratio", "random_bsl"]
+                "pc1_pct", "pc1_ratio", "random_bsl", "status"]
         print(",".join(keys))
         for r in rows:
             print(",".join(str(r.get(k, "?")) for k in keys))
@@ -140,11 +156,12 @@ def main():
         # Table format
         print()
         print(f"{'Experiment':<35} {'Model':<30} {'PSNR':>6} {'PC1%':>7} "
-              f"{'PC1/BSL':>8} {'Align':<12}")
-        print("-" * 100)
+              f"{'PC1/BSL':>8} {'Status':<45} {'Align':<12}")
+        print("-" * 145)
         for r in rows:
             print(f"{r['image']:<35} {r['model']:<30} {r['final_psnr']:>6} "
-                  f"{r['pc1_pct']:>7} {r['pc1_ratio']:>8} {r['alignment']:<12}")
+                  f"{r['pc1_pct']:>7} {r['pc1_ratio']:>8} "
+                  f"{r['status']:<45} {r['alignment']:<12}")
 
         # Summary
         done = len(entries)

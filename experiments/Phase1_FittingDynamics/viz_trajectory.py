@@ -91,6 +91,23 @@ def compute_global_pca(snapshots):
     return ev_ratio, projections, Vt
 
 
+def align_snapshot_metric_steps(steps: np.ndarray, values: np.ndarray):
+    """Align per-snapshot metrics to snapshot steps.
+
+    Current trajectory files support two conventions:
+      - metric length == len(steps), includes step 0;
+      - metric length == len(steps) - 1, excludes step 0.
+    """
+    values = np.asarray(values)
+    if len(values) == 0:
+        return np.array([]), values
+    if len(values) == len(steps):
+        return np.asarray(steps), values
+    if len(values) == len(steps) - 1:
+        return np.asarray(steps)[1:], values
+    return np.linspace(steps[0], steps[-1], len(values)), values
+
+
 def load_trajectory(trajectory_path: str):
     """Load trajectory NPZ and return components."""
     data = np.load(trajectory_path, allow_pickle=True)
@@ -213,8 +230,30 @@ def load_reconstructions(
         model = _SIREN(**SIREN_CONFIG).to(torch_device)
     elif model_type_lower == "liif":
         from src.models.liif import LIIFModel
-        from experiments.config import LIIF_CONFIG
-        model = LIIFModel(**LIIF_CONFIG).to(torch_device)
+        from experiments.config import LIIF_CONFIG, LIIF_CONFIG_REDUCED
+
+        liif_candidates = [
+            ("LIIF_CONFIG_REDUCED", LIIF_CONFIG_REDUCED),
+            ("LIIF_CONFIG", LIIF_CONFIG),
+        ]
+        preferred = summary.get("model_config_name")
+        if preferred:
+            liif_candidates = sorted(
+                liif_candidates,
+                key=lambda item: 0 if item[0] == preferred else 1,
+            )
+
+        model = None
+        for config_name, config in liif_candidates:
+            candidate = LIIFModel(**config).to(torch_device)
+            candidate_params = candidate.get_params()
+            candidate_total = sum(p.numel() for p in candidate_params.values())
+            if candidate_total == snapshots.shape[1]:
+                model = candidate
+                print(f"  Using {config_name} for scratch LIIF visualization")
+                break
+        if model is None:
+            model = LIIFModel(**LIIF_CONFIG_REDUCED).to(torch_device)
     elif model_type_lower == "lte":
         from src.models.lte import LTEModel
         from experiments.config import LTE_CONFIG
@@ -364,13 +403,14 @@ def create_trajectory_animation(
     # PSNR panel
     has_psnr = len(psnrs) > 0
     if has_psnr:
-        ax2.plot(st, psnrs[:len(st)], "b-", linewidth=1.8, alpha=0.8)
+        psnr_steps, psnr_vals = align_snapshot_metric_steps(st, psnrs)
+        ax2.plot(psnr_steps, psnr_vals, "b-", linewidth=1.8, alpha=0.8)
         ax2.set_xlabel("Training Step")
         ax2.set_ylabel("PSNR (dB)", color="blue")
         ax2.tick_params(axis="y", labelcolor="blue")
         ax2.set_title("PSNR Progression")
         ax2.set_xlim(st[0], st[-1])
-        ymin, ymax = psnrs.min() - 1, psnrs.max() + 1
+        ymin, ymax = psnr_vals.min() - 1, psnr_vals.max() + 1
         ax2.set_ylim(ymin, ymax)
 
     def update(frame):
@@ -443,7 +483,8 @@ def create_dashboard(
     has_psnr = len(psnrs) > 0
     if has_psnr and len(psnrs) > 1:
         ax1_twin = ax1.twinx()
-        line1 = ax1.plot(steps[1:], psnrs, "b-", lw=1.8, label="PSNR")
+        psnr_steps, psnr_vals = align_snapshot_metric_steps(steps, psnrs)
+        line1 = ax1.plot(psnr_steps, psnr_vals, "b-", lw=1.8, label="PSNR")
         ax1.set_ylabel("PSNR (dB)", color="blue")
         ax1.tick_params(axis="y", labelcolor="blue")
         if len(losses) > 0:
@@ -471,14 +512,12 @@ def create_dashboard(
     ax3.set_title("Spectral Bias (Low-Freq Error Ratio)")
     ax3.set_xlabel("Snapshot Step")
     if len(freq_ratios) > 0:
-        snap_steps = steps[1:] if len(steps) == len(freq_ratios) + 1 else steps
-        if len(snap_steps) != len(freq_ratios):
-            snap_steps = np.linspace(steps[0], steps[-1], len(freq_ratios))
-        ax3.plot(snap_steps, freq_ratios, "purple", lw=1.8, alpha=0.8)
-        ax3.axhline(y=freq_ratios[0], color="gray", ls="--", lw=0.8,
-                    alpha=0.5, label=f"Start: {freq_ratios[0]:.3f}")
-        ax3.axhline(y=freq_ratios[-1], color=_END_COLOR, ls="--", lw=0.8,
-                    alpha=0.5, label=f"End: {freq_ratios[-1]:.3f}")
+        snap_steps, freq_vals = align_snapshot_metric_steps(steps, freq_ratios)
+        ax3.plot(snap_steps, freq_vals, "purple", lw=1.8, alpha=0.8)
+        ax3.axhline(y=freq_vals[0], color="gray", ls="--", lw=0.8,
+                    alpha=0.5, label=f"Start: {freq_vals[0]:.3f}")
+        ax3.axhline(y=freq_vals[-1], color=_END_COLOR, ls="--", lw=0.8,
+                    alpha=0.5, label=f"End: {freq_vals[-1]:.3f}")
         ax3.set_ylim(0, 1)
         ax3.legend(fontsize=6, framealpha=0.8)
     else:
@@ -650,33 +689,31 @@ def create_spectral_bias_plot(
         print("  Skipping spectral bias plot (no data)")
         return
 
-    snap_steps = steps[1:] if len(steps) == len(freq_ratios) + 1 else steps
-    if len(snap_steps) != len(freq_ratios):
-        snap_steps = np.linspace(steps[0], steps[-1], len(freq_ratios))
+    snap_steps, freq_vals = align_snapshot_metric_steps(steps, freq_ratios)
 
     fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
     plt.subplots_adjust(wspace=0.35)
 
     # Panel 1: Low-freq ratio over time
     ax = axes[0]
-    ax.plot(snap_steps, freq_ratios, "purple", lw=2, alpha=0.85)
-    ax.fill_between(snap_steps, 0, freq_ratios, alpha=0.15, color="purple")
-    ax.axhline(y=freq_ratios[0], color="gray", ls="--", lw=1, alpha=0.6)
-    ax.axhline(y=freq_ratios[-1], color=_END_COLOR, ls="--", lw=1, alpha=0.6)
+    ax.plot(snap_steps, freq_vals, "purple", lw=2, alpha=0.85)
+    ax.fill_between(snap_steps, 0, freq_vals, alpha=0.15, color="purple")
+    ax.axhline(y=freq_vals[0], color="gray", ls="--", lw=1, alpha=0.6)
+    ax.axhline(y=freq_vals[-1], color=_END_COLOR, ls="--", lw=1, alpha=0.6)
     ax.set_xlabel("Training Step")
     ax.set_ylabel("Low-Frequency Error Fraction")
     ax.set_title("Spectral Bias: Low-Freq Error Over Time")
     ax.set_ylim(0, 1)
-    ax.text(0.02, 0.02, f"↓ {(1 - freq_ratios[-1]/freq_ratios[0])*100:.0f}%",
+    ax.text(0.02, 0.02, f"↓ {(1 - freq_vals[-1]/freq_vals[0])*100:.0f}%",
             transform=ax.transAxes, fontsize=9, color=_END_COLOR,
             va="bottom", fontweight="bold")
 
     # Panel 2: Per-band error at early / mid / late
     ax2 = axes[1]
-    if len(freq_ratios) >= 3:
+    if len(freq_vals) >= 3:
         # Reconstruct per-band from low-freq ratio (proxy)
         n_bins = 8
-        n_snapshots = len(freq_ratios)
+        n_snapshots = len(freq_vals)
         early = max(0, n_snapshots // 6)
         mid = n_snapshots // 2
         late = n_snapshots - 1
@@ -686,7 +723,7 @@ def create_spectral_bias_plot(
             ("Mid", mid, "orange", "s"),
             ("Late", late, _END_COLOR, "^"),
         ]:
-            lf = freq_ratios[idx]
+            lf = freq_vals[idx]
             # Approximate per-band distribution: geometric decay
             hf = 1 - lf
             band_vals = np.array([lf * 0.6, lf * 0.25, lf * 0.1, lf * 0.05] +
@@ -704,9 +741,10 @@ def create_spectral_bias_plot(
     ax3 = axes[2]
     if len(psnrs) > 1 and len(freq_ratios) > 1:
         # Align lengths
-        n = min(len(psnrs), len(freq_ratios))
-        p = psnrs[:n]
-        f = freq_ratios[:n]
+        _, psnr_vals = align_snapshot_metric_steps(steps, psnrs)
+        n = min(len(psnr_vals), len(freq_vals))
+        p = psnr_vals[:n]
+        f = freq_vals[:n]
         ax3.scatter(f, p, c=snap_steps[:n] if len(snap_steps) >= n else np.arange(n),
                     cmap=_COLORMAP, s=30, alpha=0.7)
         ax3.set_xlabel("Low-Freq Error Ratio")

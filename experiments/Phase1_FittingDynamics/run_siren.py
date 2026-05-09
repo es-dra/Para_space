@@ -146,7 +146,7 @@ def run_siren_dynamics(
             delta_norm = np.linalg.norm(current_flat - theta_0_flat)
 
             tqdm.write(
-                f"  Step {step}: loss={loss.item():.6f}, PSNR={psnr_val:.1f} dB, "
+                f"  Step {step}: loss={float(loss.detach().cpu()):.6f}, PSNR={psnr_val:.1f} dB, "
                 f"|Δθ|={delta_norm:.4f}, |∇|={grad_norm:.4f}, "
                 f"low-freq={low_freq_ratio:.3f}"
             )
@@ -191,7 +191,7 @@ def run_siren_dynamics(
             "siren_config": SIREN_CONFIG,
             "image_size": image_size,
             "total_steps": total_steps,
-            "snapshot_steps": snapshot_steps_list,
+            "planned_snapshot_steps": snapshot_steps_list,
             "n_snapshots": n_snapshots,
             "alignment": "hungarian+signflip",
             "initial_psnr": float(initial_psnr),
