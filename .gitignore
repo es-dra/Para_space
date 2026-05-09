@@ -11,5 +11,7 @@ build/
 results/
 Data/
 model/
+pretrained/**/*.pth
 .claude/settings.json
+.claude/settings.local.json
 claude-wrapper.sh
