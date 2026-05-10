@@ -16,6 +16,9 @@
 | B-RUN-LIIF | reduced LIIF scratch SR x4 trajectory 是否可记录/检查 | `Data/Set5/HR/{baby,bird,butterfly}.png` | `experiments/Phase1_FittingDynamics/run.py` | `results/FittingDynamics_StageB/LIIF_reduced_*` | raw official runs | complete |
 | B-CHECK | trajectory schema/shape/summary/readiness 是否通过 | Stage B result dirs | `check_outputs.py` | stdout checks, documented in Stage B closeout | validation | complete |
 | B-CTRL | PC1 与 random/permuted controls 比较 | Stage B original 10 runs | `analyze_stage_b_controls.py` | documented tables | derived diagnostic | complete |
+| B-PRIME | 参数/响应轨迹是否存在超过 endpoint drift、step norm schedule、优化平滑性和参数化伪影的非平凡结构 | Stage B trajectory files | `analyze_stage_b_trajectory_audit.py` | `results/FittingDynamics_StageB_diagnostics/stage_b_prime_trajectory_audit_2026-05-09.json` | trajectory-object audit / negative gate | complete |
+| B-RESPONSE | 输出函数响应轨迹是否比参数轨迹更适合作为下一对象 | Stage B trajectory files | `analyze_stage_b_response_audit.py` | `results/FittingDynamics_StageB_diagnostics/stage_b_response_audit_2026-05-09.json` | function-space audit / mixed gate | complete |
+| B-LIIF-UNIT | LIIF decoder input / local decoder output 是否提供更干净的 function-space unit | Stage B LIIF trajectory files | `analyze_stage_b_liif_unit_audit.py` | `results/FittingDynamics_StageB_diagnostics/stage_b_liif_unit_audit_screen_2026-05-09.json` | diagnostic screen, not formal gate | complete |
 
 See [run_manifest_stage_b.md](run_manifest_stage_b.md).
 
@@ -27,6 +30,7 @@ See [run_manifest_stage_b.md](run_manifest_stage_b.md).
 | C-FAIL | bird/head failure 是否可定位 | bird/head + baby/woman guardrails | `analyze_stage_c_failure_audit.py` | `results/FittingDynamics_StageC_diagnostics/*` | failure audit | complete |
 | C-RESP | response-object 修补是否解释 failure | bird/head + baby/woman guardrails | `analyze_stage_c_response_object_audit.py` | `response_object_audit_2026-05-08.json` | negative diagnostic | complete |
 | C-UNIT | LIIF-aware LR-cell unit 是否修复 failure | bird/head + baby/woman guardrails | `analyze_stage_c_patch_unit_gate.py` | `patch_unit_gate_lr_cell_2026-05-08.json` | negative gate | complete |
+| C-MINIMAL | LR-cell encoder feature trajectory complexity 是否能被 local geometry 在 coordinate+content 之外增量解释 | baby123, woman42, bird42, head42 reduced LIIF | `analyze_stage_c_lr_cell_feature_trajectory.py` | `results/FittingDynamics_StageB_diagnostics/stage_c_lr_cell_feature_trajectory_c_minimal_2026-05-10.json` | C-minimal diagnostic gate / mixed | complete |
 
 See [analysis_manifest_stage_c.md](analysis_manifest_stage_c.md).
 

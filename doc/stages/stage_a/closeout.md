@@ -29,12 +29,14 @@ It does not establish:
 ## Reliable Conclusions
 
 1. The original PCA/trajectory-centered story was correctly downgraded.
-2. The project should test local geometry-to-response/update correspondence rather than generic low-dimensional parameter trajectories.
-3. Equivariance is a hypothesis about regularization/exposure of structure, not a premise.
-4. Training reduction is a long-term application hypothesis and remains blocked.
+2. Parameter/response fitting dynamics remains the primary research object; local geometry is an explanatory hypothesis, not the whole project.
+3. Generic PCA low-dimensionality is not an adequate formulation of parameter dynamics.
+4. Equivariance is a hypothesis about regularization/exposure of structure, not a premise.
+5. Training reduction is a long-term application hypothesis and remains blocked.
 
 ## Hypothesis Ladder
 
+- H0：参数/响应 fitting dynamics 是否存在超过平凡控制的非平凡结构。
 - H1：局部几何相似 patch 是否对应 response/update similarity。
 - H2：尺度条件下的 response/update 是否有结构。
 - H3：等变性是否正则化 geometry-response/update correspondence。
@@ -59,3 +61,5 @@ This map is sufficient for pilot design only. It must be converted into a verifi
 ## Forbidden Wording
 
 > Stage A establishes that local geometry predicts INR adaptation.
+
+> Stage A replaces parameter-dynamics research with only patch-geometry matching.

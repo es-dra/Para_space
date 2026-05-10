@@ -5,8 +5,11 @@
 ## 当前状态
 
 - Stage A：完成 pilot 级问题定义、可证伪假设、非目标、负对照和第一轮文献地图；尚不是论文级完整 related work。
-- Stage B：完成 scratch fitting-dynamics 平台验证；只支持“平台可靠”，不支持局部几何机制、等变性或训练加速 claim。
-- Stage C：处于 pilot / failure-audit 阶段；已有局部线索，但当前 patch matching / raw output trajectory 操作化未通过主证据标准。
+- Stage B：完成 scratch fitting-dynamics 平台验证；只支持“平台可靠”，不支持非平凡参数轨迹规律、局部几何机制、等变性或训练加速 claim。
+- Stage B-prime：完成首轮参数轨迹本体审计；发现 LIIF decoder 非随机 directed drift，但接近 endpoint/update-set controls 且 layer-scale dominated，未通过强机制 gate。
+- Stage B-response：完成首轮函数响应轨迹审计；SIREN response 相对 line-like，LIIF response 低秩但 encoder/decoder/interaction 不可简单分离，未给出重开 Stage C 的 clean positive gate。
+- Stage B LIIF-unit：完成 256-query diagnostic screen；decoder input 基本跟随 encoder feature，decoder/local output 更弯更高秩，未修复 LIIF response-object 问题。
+- Stage C：处于 pilot / failure-audit 阶段；已有局部线索，但当前 patch matching / raw output trajectory 操作化未通过主证据标准，Stage B-prime 也不足以支持直接重开。2026-05-10 的 C-minimal LR-cell encoder-feature diagnostic 为 mixed/inconclusive：baby/woman 有正增量，bird/head 为负，未通过重开 gate。
 - Stage D：未启动；等变性、update prediction、training reduction 均为 blocked claim。
 
 ## Canonical Sources
@@ -19,6 +22,9 @@
 | 决策记录 | [decisions/README.md](decisions/README.md) | 为什么封版、暂停、降级或继续某路线 |
 | Stage A closeout | [stages/stage_a/closeout.md](stages/stage_a/closeout.md) | Stage A 当前可靠结论与剩余风险 |
 | Stage B closeout | [stages/stage_b/closeout.md](stages/stage_b/closeout.md) | Stage B 平台证据与解释边界 |
+| Stage B-prime audit | [stages/stage_b/b_prime_trajectory_audit.md](stages/stage_b/b_prime_trajectory_audit.md) | 参数/响应轨迹本体初审结果 |
+| Stage B-response audit | [stages/stage_b/response_trajectory_audit.md](stages/stage_b/response_trajectory_audit.md) | 函数响应轨迹初审结果 |
+| LIIF unit screen | [stages/stage_b/liif_internal_unit_screen.md](stages/stage_b/liif_internal_unit_screen.md) | LIIF 内部 function-space unit 筛查 |
 | Stage C status | [stages/stage_c/current_status.md](stages/stage_c/current_status.md) | Stage C 当前证据、失败和下一 gate |
 | 工程边界 | [Refactor_plan.md](Refactor_plan.md) | 当前代码入口、保守重构边界和测试要求 |
 | 历史材料 | [archive/README.md](archive/README.md) | 旧计划、旧协议、混合日志的状态说明 |

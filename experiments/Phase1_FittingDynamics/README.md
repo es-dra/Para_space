@@ -17,10 +17,14 @@ Official runs should pass an explicit `--save_dir`. Do not rely on legacy defaul
 |---|---|
 | `check_outputs.py` | validate trajectory schema, shapes, summary and analysis readiness |
 | `analyze_stage_b_controls.py` | Stage B trajectory controls |
+| `analyze_stage_b_trajectory_audit.py` | Stage B-prime parameter trajectory-object audit |
+| `analyze_stage_b_response_audit.py` | Stage B function-response trajectory audit |
+| `analyze_stage_b_liif_unit_audit.py` | LIIF internal-unit diagnostic screen |
 | `analyze_stage_c_geometry_response.py` | Stage C geometry-response pilot probe |
 | `analyze_stage_c_failure_audit.py` | reviewer-style Stage C failure audit |
 | `analyze_stage_c_response_object_audit.py` | response-object audit for bird/head failure |
 | `analyze_stage_c_patch_unit_gate.py` | LIIF-aware LR-cell patch-unit gate |
+| `analyze_stage_c_lr_cell_feature_trajectory.py` | C-minimal LR-cell encoder-feature trajectory diagnostic |
 | `analyze_stage_c_controlled_self_similarity.py` | controlled self-similarity sanity gate |
 | `generate_controlled_self_similarity_images.py` | generate controlled diagnostic inputs |
 
