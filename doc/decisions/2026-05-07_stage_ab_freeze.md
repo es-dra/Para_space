@@ -9,7 +9,11 @@ Stage A/B 是否已经足以支撑进入 Stage C pilot？
 - [stages/stage_a/closeout.md](../stages/stage_a/closeout.md)
 - [stages/stage_b/closeout.md](../stages/stage_b/closeout.md)
 - [evidence/run_manifest_stage_b.md](../evidence/run_manifest_stage_b.md)
-- historical review: [../archive/historical_docs/StageAB_review_2026-05-07.md](../archive/historical_docs/StageAB_review_2026-05-07.md)
+- Current claim boundaries: [../claims_ledger.md](../claims_ledger.md)
+
+The old mixed Stage A/B review log was deleted in the 2026-05-11 cleanup after
+its current conclusions were consolidated into stage closeouts and this
+decision record.
 
 ## Decision
 

@@ -1,17 +1,11 @@
-from typing import Dict, Optional
-
 import torch.nn as nn
 
 from .liif import LIIFDecoder, LIIFModel, EDSREncoder
 from .lte import LTEDecoder, LTEModel
-from .pretrained_liif import PretrainedLIIF
-from .pretrained_liif_eq import PretrainedLIIF_EQ
 
 MODEL_REGISTRY = {
     "liif": LIIFModel,
     "lte": LTEModel,
-    "pretrained_liif": PretrainedLIIF,
-    "pretrained_liif_eq": PretrainedLIIF_EQ,
 }
 
 DECODER_REGISTRY = {
@@ -40,9 +34,8 @@ __all__ = [
     "LIIFDecoder",
     "LIIFModel",
     "LTEDecoder",
-    "PretrainedLIIF",
     "LTEModel",
-    "EDSR",
+    "EDSREncoder",
     "MODEL_REGISTRY",
     "DECODER_REGISTRY",
     "create_model",

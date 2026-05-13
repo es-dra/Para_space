@@ -165,8 +165,8 @@ def validate_trajectory_schema(
 
     Args:
         keys_or_mapping: Mapping or iterable of NPZ keys.
-        model_family: 'siren' or 'conditional'. Conditional covers LIIF/LTE/
-            pretrained LIIF/LIIF-EQ trajectory files.
+        model_family: 'siren' or 'conditional'. Conditional covers current
+            scratch LIIF/LTE trajectory files.
         allow_extra: Whether to allow extra keys.
     """
     family = model_family.lower()
@@ -177,7 +177,7 @@ def validate_trajectory_schema(
             optional=SIREN_OPTIONAL_KEYS,
             allow_extra=allow_extra,
         )
-    if family in {"conditional", "liif", "lte", "pretrained_liif", "liif_eq"}:
+    if family in {"conditional", "liif", "lte"}:
         return validate_keys(
             keys_or_mapping,
             required=CONDITIONAL_REQUIRED_KEYS,

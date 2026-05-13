@@ -23,12 +23,10 @@ old HR patch output-response nearest-neighbor object.
 
 ## Evidence Considered
 
-- Script: `experiments/Phase1_FittingDynamics/analyze_stage_c_lr_cell_feature_trajectory.py`
-- Tests: `tests/test_stage_c_lr_cell_feature_trajectory.py`
-- Artifact:
-  `results/FittingDynamics_StageB_diagnostics/stage_c_lr_cell_feature_trajectory_c_minimal_2026-05-10.json`
+- Original script/test/artifact were retired from the active tree in the
+  2026-05-11 cleanup after this decision was summarized.
 - Validation:
-  - `pytest -q tests/test_stage_c_lr_cell_feature_trajectory.py`
+  - original focused test passed before cleanup;
   - related regression suite after the old LIIF-unit normalization fix:
     `83 passed in 6.24s`
 

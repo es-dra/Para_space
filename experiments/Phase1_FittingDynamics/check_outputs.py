@@ -29,11 +29,6 @@ CONDITIONAL_NAMES = {
     "conditional",
     "liif",
     "lte",
-    "pretrained_liif",
-    "pretrainedliif",
-    "liif_eq",
-    "pretrained_liif_eq",
-    "pretrainedliif_eq",
 }
 
 
@@ -103,9 +98,7 @@ def check_summary_consistency(summary: dict[str, Any], trajectory: Any) -> tuple
     psnrs = _as_list(trajectory.get("psnrs"))
     if psnrs:
         final_psnr = float(psnrs[-1])
-        # Existing scripts do not use a single precision convention:
-        # run_siren.py/run.py store full precision, while run_finetune.py
-        # rounds final_psnr to 2 decimals in dynamics_summary.json.
+        # Accept small summary rounding differences from historical outputs.
         if "final_psnr" in summary and abs(float(summary["final_psnr"]) - final_psnr) > 5e-3:
             ok = False
             messages.append(
@@ -195,7 +188,7 @@ def main() -> int:
         "--model_family",
         type=str,
         default=None,
-        choices=["siren", "conditional", "liif", "lte", "pretrained_liif", "liif_eq"],
+        choices=["siren", "conditional", "liif", "lte"],
         help="Override inferred schema family",
     )
     parser.add_argument(

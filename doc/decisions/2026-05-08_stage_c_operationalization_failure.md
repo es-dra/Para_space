@@ -16,10 +16,9 @@ local patch appearance / geometry nearest neighbor
 - [stages/stage_c/current_status.md](../stages/stage_c/current_status.md)
 - [evidence/analysis_manifest_stage_c.md](../evidence/analysis_manifest_stage_c.md)
 - [evidence/analysis_manifest_stage_c.md](../evidence/analysis_manifest_stage_c.md)
-- `results/FittingDynamics_StageC_diagnostics/candidate_attribute_gate_2026-05-08.json`
-- `results/FittingDynamics_StageC_diagnostics/response_object_audit_2026-05-08.json`
-- `results/FittingDynamics_StageC_diagnostics/patch_unit_gate_lr_cell_2026-05-08.json`
-- `results/FittingDynamics_StageC_controlled_diagnostics/controlled_self_similarity_fitted_gate_2026-05-08.json`
+- Retired Stage C diagnostic artifacts summarized in the analysis manifest.
+  The raw derived JSONs were removed from the active tree during the
+  2026-05-11 cleanup.
 
 ## Decision
 

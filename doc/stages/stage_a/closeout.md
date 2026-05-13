@@ -21,10 +21,12 @@ It does not establish:
 
 ## Canonical Inputs
 
-- Historical source: [../../archive/historical_docs/StageA_research_questions.md](../../archive/historical_docs/StageA_research_questions.md)
-- Historical source: [../../archive/historical_docs/StageA_literature_baseline.md](../../archive/historical_docs/StageA_literature_baseline.md)
 - Current project contract: [../../research_contract.md](../../research_contract.md)
 - Claim boundary: [../../claims_ledger.md](../../claims_ledger.md)
+- Project index: [../../project_index.md](../../project_index.md)
+
+Historical Stage A drafts were deleted during the 2026-05-11 cleanup after their
+current conclusions were consolidated here and in the research contract.
 
 ## Reliable Conclusions
 

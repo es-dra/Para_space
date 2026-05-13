@@ -30,12 +30,10 @@ import torch.nn.functional as F
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from experiments.Phase1_FittingDynamics.analyze_stage_b_response_audit import (
-    load_summary,
-    response_audit_metrics,
-)
-from experiments.Phase1_FittingDynamics.analyze_stage_c_geometry_response import (
     build_liif_model,
+    load_summary,
     resolve_image_path_from_summary,
+    response_audit_metrics,
     unflatten_full_state,
 )
 from experiments.Phase1_FittingDynamics.run import load_image

@@ -44,7 +44,7 @@ def _get_decoder_layer_keys(state_dict: Dict[str, torch.Tensor]) -> List[Tuple[s
     """Find all (weight_key, bias_key) pairs for standard Linear layers in a Sequential decoder.
 
     Supports two naming conventions used across model implementations:
-      - layers.{i}.weight  (LIIFDecoder, EQ_MLP standard Linear layers)
+      - layers.{i}.weight  (LIIFDecoder standard Linear layers)
       - mlp.{i}.weight     (LTEDecoder)
 
     Only returns pairs for standard nn.Linear layers (2D weights).

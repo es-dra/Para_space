@@ -6,7 +6,7 @@ This directory contains training, validation, and analysis scripts for fitting-d
 
 | Script | Role | Current status |
 |---|---|---|
-| `run.py` | scratch conditional INR / LIIF / LTE fitting | official for reduced LIIF Stage B/C-controlled runs |
+| `run.py` | scratch conditional INR / LIIF / LTE fitting | official for reduced LIIF Stage B runs |
 | `run_siren.py` | scratch SIREN fitting | official for Stage B SIREN baseline |
 
 Official runs should pass an explicit `--save_dir`. Do not rely on legacy defaults such as `results/FittingDynamics/...` for new formal results.
@@ -20,21 +20,14 @@ Official runs should pass an explicit `--save_dir`. Do not rely on legacy defaul
 | `analyze_stage_b_trajectory_audit.py` | Stage B-prime parameter trajectory-object audit |
 | `analyze_stage_b_response_audit.py` | Stage B function-response trajectory audit |
 | `analyze_stage_b_liif_unit_audit.py` | LIIF internal-unit diagnostic screen |
-| `analyze_stage_c_geometry_response.py` | Stage C geometry-response pilot probe |
-| `analyze_stage_c_failure_audit.py` | reviewer-style Stage C failure audit |
-| `analyze_stage_c_response_object_audit.py` | response-object audit for bird/head failure |
-| `analyze_stage_c_patch_unit_gate.py` | LIIF-aware LR-cell patch-unit gate |
-| `analyze_stage_c_lr_cell_feature_trajectory.py` | C-minimal LR-cell encoder-feature trajectory diagnostic |
-| `analyze_stage_c_controlled_self_similarity.py` | controlled self-similarity sanity gate |
-| `generate_controlled_self_similarity_images.py` | generate controlled diagnostic inputs |
 
-## Legacy / Blocked Entrypoints
+## Removed / Retired Entrypoints
 
-| Script | Status | Reason |
+| Removed scripts | Status | Reason |
 |---|---|---|
-| `aggregate_results.py` | legacy diagnostic | PCA-style summary, not current Stage B main evidence |
-| `viz_trajectory.py` | legacy visualization utility | useful for diagnostics, not formal claim evidence by itself |
-| `run_finetune.py` | blocked / experimental | pretrained LIIF/LIIF-EQ source, checkpoint and fairness protocol not closed |
+| `aggregate_results.py`, `viz_trajectory.py` | deleted legacy diagnostics | PCA/visualization summaries are not current evidence |
+| `run_finetune.py` | deleted blocked path | pretrained LIIF/LIIF-EQ route is not active evidence |
+| `analyze_stage_c_*.py`, `generate_controlled_self_similarity_images.py` | deleted retired diagnostics | natural-image Stage C repair and old controlled self-similarity are stopped; conclusions live in canonical docs |
 
 ## No Temporary Launchers
 

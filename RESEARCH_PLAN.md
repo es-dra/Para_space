@@ -2,7 +2,7 @@
 
 ## 0. 当前定位与范围
 
-本文档是当前项目的顶层路线图。具体事实源以 [`doc/project_index.md`](doc/project_index.md) 为入口；早期 [`paper/`](paper) 与 [`doc/archive/historical_docs/Phase1_design.md`](doc/archive/historical_docs/Phase1_design.md) 中的内容保留为历史草稿与观测基线，不视为已经成立的结论。
+本文档是当前项目的顶层路线图。具体事实源以 [`doc/project_index.md`](doc/project_index.md) 为入口；旧 [`paper/`](paper) 正文和旧 [`doc/archive/`](doc/archive) 长日志已在 2026-05-11 cleanup 中删除或缩减，不视为当前证据源。
 
 2026-05-09 更新：论文级证据入口已建立在 [`doc/project_index.md`](doc/project_index.md)。本文件只保留主路线和背景动机；具体 claim 边界、实验索引、stage closeout 和决策记录以 [`doc/claims_ledger.md`](doc/claims_ledger.md)、[`doc/evidence/experiment_registry.md`](doc/evidence/experiment_registry.md)、[`doc/stages/`](doc/stages) 和 [`doc/decisions/`](doc/decisions) 为准。若本文件与这些索引冲突，以新索引为当前事实源。
 
@@ -112,15 +112,15 @@
 | [`doc/claims_ledger.md`](doc/claims_ledger.md) | claim-evidence 状态 | 论文写作前必查 |
 | [`doc/evidence/experiment_registry.md`](doc/evidence/experiment_registry.md) | 实验与分析索引 | 证据追溯入口 |
 | [`doc/Refactor_plan.md`](doc/Refactor_plan.md) | 工程边界 | 代码维护依据 |
-| [`paper/`](paper) | 旧 group-orbit 草稿 | historical non-canonical |
-| [`doc/archive/`](doc/archive) | 旧计划、旧日志、旧规则 | 审计材料，不作当前入口 |
+| [`paper/`](paper) | 无活跃 manuscript；只保留旧稿删除说明 | 未来论文需从 ledger 重写 |
+| [`doc/archive/`](doc/archive) | 旧计划、旧日志、旧规则已缩减为 README | 不是当前事实入口 |
 
 ### 3.2 代码资产
 
 | 模块 | 文件 | 作用 |
 |---|---|---|
 | 参数对齐 | [`src/alignment.py`](src/alignment.py), [`tests/test_alignment.py`](tests/test_alignment.py) | 参数空间比较基础 |
-| 模型 | [`src/siren.py`](src/siren.py), [`src/models/`](src/models) | SIREN、LIIF、LTE、pretrained LIIF、LIIF-EQ |
+| 模型 | [`src/siren.py`](src/siren.py), [`src/models/`](src/models) | 当前保留 SIREN、scratch LIIF、LTE；pretrained LIIF/LIIF-EQ wrapper 已从活跃代码面删除 |
 | 数据/变换 | [`src/datasets.py`](src/datasets.py), [`src/transforms.py`](src/transforms.py) | 图像、坐标、几何变换工具 |
 | 指标/频谱 | [`src/metrics.py`](src/metrics.py), [`src/spectral.py`](src/spectral.py) | 重建质量与频谱诊断 |
 | 拟合动态 | [`experiments/Phase1_FittingDynamics/`](experiments/Phase1_FittingDynamics) | 当前 observation baseline |
@@ -131,7 +131,7 @@
 现有 fitting dynamics 脚本保存：
 
 ```text
-results/FittingDynamics/{MODEL_TAG}/
+results/FittingDynamics_StageB/{MODEL_TAG}/
   trajectory.npz
     full_snapshots
     full_snapshots_aligned
@@ -294,7 +294,7 @@ no adaptation、full fine-tuning、decoder-only fine-tuning、random low-rank up
 
 ## 7. 论文产出路径
 
-旧 [`paper/`](paper) 叙事不应继续主导。当前它已标记为 historical non-canonical draft，除非后续依据 [`doc/claims_ledger.md`](doc/claims_ledger.md) 完整重写，否则不能作为论文源。
+旧 [`paper/`](paper) 叙事不应继续主导。旧正文已删除；未来 manuscript 必须依据 [`doc/claims_ledger.md`](doc/claims_ledger.md) 和新的 evidence registry 从头重写。
 
 以下只是候选论文命题，当前尚未成立：
 

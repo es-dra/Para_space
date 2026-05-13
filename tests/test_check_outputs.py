@@ -121,12 +121,12 @@ def test_validate_result_dir_detects_summary_final_metric_mismatch(tmp_path):
     assert any("final_psnr" in msg for msg in messages)
 
 
-def test_validate_result_dir_accepts_finetune_style_rounded_final_psnr(tmp_path):
+def test_validate_result_dir_accepts_small_rounded_final_psnr(tmp_path):
     result_dir = tmp_path / "rounded_final_psnr"
     _write_siren_output(result_dir)
     summary_path = result_dir / "dynamics_summary.json"
     summary = json.loads(summary_path.read_text())
-    # run_finetune.py rounds final_psnr to two decimals in the summary.
+    # Historical summaries may round final_psnr slightly.
     summary["final_psnr"] = summary["final_psnr"] + 0.004
     summary_path.write_text(json.dumps(summary))
 

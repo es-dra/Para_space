@@ -22,30 +22,40 @@
 
 See [run_manifest_stage_b.md](run_manifest_stage_b.md).
 
-## Stage C Natural-Image Diagnostics
+## Retired Stage C Natural-Image Diagnostics
 
-| ID | Question | Input | Script | Output | Evidence class | Status |
-|---|---|---|---|---|---|---|
-| C-GEOM | geometry-response pilot 是否有局部信号 | Stage B LIIF runs | `analyze_stage_c_geometry_response.py` | stdout/table and follow-up JSONs | pilot diagnostic | complete |
-| C-FAIL | bird/head failure 是否可定位 | bird/head + baby/woman guardrails | `analyze_stage_c_failure_audit.py` | `results/FittingDynamics_StageC_diagnostics/*` | failure audit | complete |
-| C-RESP | response-object 修补是否解释 failure | bird/head + baby/woman guardrails | `analyze_stage_c_response_object_audit.py` | `response_object_audit_2026-05-08.json` | negative diagnostic | complete |
-| C-UNIT | LIIF-aware LR-cell unit 是否修复 failure | bird/head + baby/woman guardrails | `analyze_stage_c_patch_unit_gate.py` | `patch_unit_gate_lr_cell_2026-05-08.json` | negative gate | complete |
-| C-MINIMAL | LR-cell encoder feature trajectory complexity 是否能被 local geometry 在 coordinate+content 之外增量解释 | baby123, woman42, bird42, head42 reduced LIIF | `analyze_stage_c_lr_cell_feature_trajectory.py` | `results/FittingDynamics_StageB_diagnostics/stage_c_lr_cell_feature_trajectory_c_minimal_2026-05-10.json` | C-minimal diagnostic gate / mixed | complete |
+Stage C natural-image repair scripts and derived JSONs were removed from the
+active tree during the 2026-05-11 cleanup. Their conclusions remain summarized
+in [analysis_manifest_stage_c.md](analysis_manifest_stage_c.md),
+[stages/stage_c/current_status.md](../stages/stage_c/current_status.md), and
+the decision records. They are not current runnable entrypoints.
+
+| ID | Question | Input | Former script/output | Evidence class | Status |
+|---|---|---|---|---|---|
+| C-GEOM | geometry-response pilot 是否有局部信号 | Stage B LIIF runs | retired Stage C geometry diagnostics | pilot diagnostic | retired / summarized |
+| C-FAIL | bird/head failure 是否可定位 | bird/head + baby/woman guardrails | retired Stage C failure-audit diagnostics | failure audit | retired / summarized |
+| C-RESP | response-object 修补是否解释 failure | bird/head + baby/woman guardrails | retired response-object diagnostics | negative diagnostic | retired / summarized |
+| C-UNIT | LIIF-aware LR-cell unit 是否修复 failure | bird/head + baby/woman guardrails | retired LR-cell unit diagnostics | negative gate | retired / summarized |
+| C-MINIMAL | LR-cell encoder feature trajectory complexity 是否能被 local geometry 在 coordinate+content 之外增量解释 | baby123, woman42, bird42, head42 reduced LIIF | retired C-minimal diagnostics | C-minimal diagnostic gate / mixed | retired / summarized |
 
 See [analysis_manifest_stage_c.md](analysis_manifest_stage_c.md).
 
-## Stage C Controlled Diagnostics
+## Retired Stage C Controlled Diagnostics
 
-| ID | Question | Input | Script | Output | Evidence class | Status |
-|---|---|---|---|---|---|---|
-| C-CSS-DATA | 受控 periodic/nonperiodic 数据是否可生成 | seed 0, 48x48, tile 12 | `generate_controlled_self_similarity_images.py` | `Data/ControlledSelfSimilarity/` | controlled input | complete |
-| C-CSS-SMOKE | probe/wiring 在 synthetic response 已知正例上是否工作 | controlled images | `analyze_stage_c_controlled_self_similarity.py --synthetic_response_smoke` | `controlled_self_similarity_synthetic_gate_2026-05-08.json` | positive sanity check | complete |
-| C-CSS-FIT | fitted reduced LIIF 是否检出 exact repeats 且不误报 nonrepeat | controlled runs, seeds 42/123/456 | `run.py`, `analyze_stage_c_controlled_self_similarity.py` | `controlled_self_similarity_fitted_gate_2026-05-08.json` | mixed / content-confounded gate | complete |
+Old controlled self-similarity scripts and generated diagnostics were removed
+from the active tree. A future controlled mechanism test must be specified as a
+new Node Contract and must not reuse this retired route as an active entrypoint.
+
+| ID | Question | Input | Former script/output | Evidence class | Status |
+|---|---|---|---|---|---|
+| C-CSS-DATA | 受控 periodic/nonperiodic 数据是否可生成 | seed 0, 48x48, tile 12 | retired controlled generator | controlled input | retired / summarized |
+| C-CSS-SMOKE | probe/wiring 在 synthetic response 已知正例上是否工作 | controlled images | retired synthetic smoke diagnostics | positive sanity check | retired / summarized |
+| C-CSS-FIT | fitted reduced LIIF 是否检出 exact repeats 且不误报 nonrepeat | controlled runs, seeds 42/123/456 | retired fitted controlled diagnostics | mixed / content-confounded gate | retired / summarized |
 
 ## Blocked / Deferred
 
 | ID | Path | Reason |
 |---|---|---|
-| PRETRAINED-LIIF-EQ | `run_finetune.py`, pretrained wrappers | source/checkpoint/fairness/buffer policy not closed |
+| PRETRAINED-LIIF-EQ | old wrappers and `run_finetune.py` removed from active tree | source/checkpoint/fairness/buffer policy not closed |
 | STAGE-D-UPDATE | adapter/modulation/update prediction | H1 operationalization not passed |
 | EQUIVARIANCE-COMP | LIIF vs LIIF-EQ matched comparison | blocked by H1 gate and LIIF-EQ provenance |

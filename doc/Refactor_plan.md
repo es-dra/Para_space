@@ -12,6 +12,7 @@
 - 避免大规模迁移破坏旧 artifact；
 - 只在测试保护下抽取公共模块；
 - 不为尚未通过 gate 的科学路线提前设计复杂框架。
+- 保持活跃代码面小而清楚；已停止的分析分支应删除或从入口文档移除，而不是继续作为可运行选项存在。
 
 ## Active Code Surfaces
 
@@ -19,10 +20,9 @@
 |---|---|---|
 | Core library | `src/` | Keep stable; changes require tests |
 | Training entrypoints | `experiments/Phase1_FittingDynamics/run.py`, `run_siren.py` | Official for scratch reduced LIIF and SIREN evidence |
-| Validation / analysis | `check_outputs.py`, `analyze_stage_b_controls.py`, Stage C analysis scripts | Official analysis CLIs |
-| Legacy diagnostics | `aggregate_results.py`, `viz_trajectory.py` | Diagnostic only; no main claim by themselves |
-| Blocked pretrained path | `run_finetune.py`, pretrained wrappers | Not current evidence; requires provenance/fairness audit before use |
-| Tests | `tests/` | Required for schema, controls, and Stage C analysis logic |
+| Validation / analysis | `check_outputs.py`, `analyze_stage_b_controls.py`, `analyze_stage_b_trajectory_audit.py`, `analyze_stage_b_response_audit.py`, `analyze_stage_b_liif_unit_audit.py` | Official Stage B validation / audit CLIs |
+| Retired analysis | old Stage C natural-image repair scripts, old controlled self-similarity scripts, `aggregate_results.py`, `viz_trajectory.py`, `run_finetune.py` | Deleted from active code surface |
+| Tests | `tests/` | Required for schema, controls, and retained Stage B analysis logic |
 
 See [../experiments/Phase1_FittingDynamics/README.md](../experiments/Phase1_FittingDynamics/README.md) for entrypoint classification.
 
@@ -31,7 +31,7 @@ See [../experiments/Phase1_FittingDynamics/README.md](../experiments/Phase1_Fitt
 1. Do not change existing `trajectory.npz` or `dynamics_summary.json` semantics without a migration note and tests.
 2. Do not revive PCA, pretrained LIIF/LIIF-EQ, equivariance comparison, update prediction, or training acceleration as active routes unless [claims_ledger.md](claims_ledger.md) gates are updated.
 3. Do not add one-off launchers, scratch dispatchers, or nohup wrappers.
-4. Do not move or delete `results/`, `Data/`, `model/`, or `pretrained/` without an artifact mapping and explicit approval.
+4. Do not move or delete `Data/`, `model/`, or `pretrained/` without an artifact mapping and explicit approval. Generated `results/` subtrees that are smoke/debug, legacy, or retired diagnostics should be deleted unless they are current canonical evidence.
 5. Keep new analysis as named Python CLIs with clear inputs, outputs, and stop conditions.
 6. Keep workflow rules out of project docs unless they are project-specific facts.
 
@@ -69,8 +69,8 @@ High value, low risk:
 
 1. Add or maintain tests for any new analysis metric.
 2. Convert repeated result-loading code into small library helpers only after behavior is covered.
-3. Add structured experiment cards for important analysis outputs.
-4. Keep active docs short and archive long historical logs.
+3. Add structured experiment cards only for analysis outputs that are intended to become canonical.
+4. Keep active docs short; delete non-canonical analysis scripts and generated intermediates after their conclusion is summarized.
 
 Deferred:
 
@@ -116,6 +116,7 @@ PY
 For analysis/script behavior changes:
 
 ```bash
-pytest -q tests/test_stage_c_failure_audit.py tests/test_stage_c_geometry_response.py \
-  tests/test_stage_b_controls.py tests/test_check_outputs.py tests/test_trajectory_schema.py
+pytest -q tests/test_stage_b_controls.py tests/test_stage_b_trajectory_audit.py \
+  tests/test_stage_b_response_audit.py tests/test_stage_b_liif_unit_audit.py \
+  tests/test_check_outputs.py tests/test_trajectory_schema.py
 ```

@@ -75,8 +75,13 @@ Minimum audit items:
 ## Canonical Evidence
 
 - [../../evidence/run_manifest_stage_b.md](../../evidence/run_manifest_stage_b.md)
-- Historical long log: [../../archive/historical_docs/StageB_observation_log.md](../../archive/historical_docs/StageB_observation_log.md)
-- Archived concise stage notes: [../../archive/stage_summaries_2026-05-09/](../../archive/stage_summaries_2026-05-09/)
+- [b_prime_trajectory_audit.md](b_prime_trajectory_audit.md)
+- [response_trajectory_audit.md](response_trajectory_audit.md)
+- [liif_internal_unit_screen.md](liif_internal_unit_screen.md)
+
+Historical long logs and interim summaries were deleted during the 2026-05-11
+cleanup after their current conclusions were consolidated into this closeout,
+the evidence registry, and decision records.
 
 ## Allowed Wording
 

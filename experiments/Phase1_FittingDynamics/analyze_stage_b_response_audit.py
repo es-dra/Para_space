@@ -30,14 +30,9 @@ from experiments.Phase1_FittingDynamics.analyze_stage_b_trajectory_audit import 
     spectrum_metrics,
     update_decomposition_metrics,
 )
-from experiments.Phase1_FittingDynamics.analyze_stage_c_geometry_response import (
-    build_liif_model,
-    resolve_image_path_from_summary,
-    unflatten_full_state,
-)
 from experiments.Phase1_FittingDynamics.run import load_image as load_liif_image
 from experiments.Phase1_FittingDynamics.run_siren import load_image as load_siren_image
-from experiments.config import SIREN_CONFIG
+from experiments.config import LIIF_CONFIG, LIIF_CONFIG_REDUCED, SIREN_CONFIG
 from src.datasets import get_image_coordinates
 from src.models.liif import LIIFModel
 from src.siren import SIREN
@@ -82,6 +77,69 @@ def compute_psnr_vector(pred: np.ndarray, target: np.ndarray) -> float:
     """Compute PSNR for flattened RGB responses in [0, 1]."""
     mse = float(np.mean((pred - target) ** 2))
     return float(-10.0 * np.log10(mse + 1e-10))
+
+
+def resolve_image_path_from_summary(summary: dict[str, Any], data_root: Path) -> Path:
+    """Resolve the image path for a fitting-dynamics result."""
+    candidates: list[Path] = []
+    for key in ("image_path", "image_relpath"):
+        recorded = summary.get(key)
+        if recorded:
+            path = Path(recorded)
+            if path.is_absolute():
+                candidates.append(path)
+            else:
+                candidates.extend([path, data_root.parent / path, data_root / path])
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    fallback = data_root / "Set5" / "HR" / str(summary["image"])
+    if fallback.exists() or not candidates:
+        return fallback
+    return candidates[0]
+
+
+def build_liif_model(summary: dict[str, Any], n_params: int, device: torch.device) -> LIIFModel:
+    """Build a LIIF model whose parameter count matches the trajectory."""
+    if str(summary.get("model_type", "")).lower() != "liif":
+        raise ValueError("Stage B-response audit currently supports scratch LIIF outputs only")
+
+    candidates = [
+        ("LIIF_CONFIG_REDUCED", LIIF_CONFIG_REDUCED),
+        ("LIIF_CONFIG", LIIF_CONFIG),
+    ]
+    preferred = summary.get("model_config_name")
+    if preferred:
+        candidates = sorted(candidates, key=lambda item: 0 if item[0] == preferred else 1)
+
+    for _, config in candidates:
+        model = LIIFModel(**config).to(device)
+        total = sum(p.numel() for p in model.get_params().values())
+        if total == n_params:
+            return model
+    raise ValueError(f"no LIIF config matches trajectory parameter count {n_params}")
+
+
+def unflatten_full_state(
+    model: LIIFModel,
+    flat: np.ndarray,
+    device: torch.device,
+) -> dict[str, torch.Tensor]:
+    """Unflatten a full-model snapshot using model.get_params() order."""
+    templates = model.get_params()
+    total = sum(t.numel() for t in templates.values())
+    if total != flat.shape[0]:
+        raise ValueError(f"snapshot has {flat.shape[0]} params, model expects {total}")
+
+    state: dict[str, torch.Tensor] = {}
+    offset = 0
+    for key, template in templates.items():
+        n_elem = template.numel()
+        arr = flat[offset:offset + n_elem].reshape(tuple(template.shape))
+        state[key] = torch.from_numpy(arr).to(device=device, dtype=template.dtype)
+        offset += n_elem
+    return state
 
 
 def unflatten_siren_state(model: SIREN, flat: np.ndarray, device: torch.device) -> dict[str, torch.Tensor]:

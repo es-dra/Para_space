@@ -115,7 +115,7 @@ def test_siren_alignment_recovery():
 
     siren_aligned.set_params(theta_aligned)
     print("\n  *** SIREN alignment: ALL CHECKS PASSED ***")
-    return True
+    assert True
 
 
 def test_liif_decoder_alignment_recovery():
@@ -181,7 +181,7 @@ def test_liif_decoder_alignment_recovery():
     print(f"  [PASS] Aligned decoder output matches reference: PSNR = {psnr:.1f} dB")
 
     print("\n  *** LIIF decoder alignment: ALL CHECKS PASSED ***")
-    return True
+    assert True
 
 
 if __name__ == "__main__":

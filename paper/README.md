@@ -1,16 +1,17 @@
-# Historical Paper Draft
+# Paper Directory
 
-The files in this directory are a historical, non-canonical manuscript draft. They do not represent the current project claims.
+There is no active manuscript in this directory.
 
-Known issues:
+The former historical draft was deleted during the 2026-05-11 project health
+cleanup because it contained unsupported group-orbit, Lie-algebra, COIN++
+explanation, and fast-adaptation claims. Keeping a compilable-looking draft was
+more likely to mislead future work than to help reproducibility.
 
-- The draft contains unsupported group-orbit, Lie-algebra, COIN++ explanation, and tangent-fast-adaptation claims.
-- It predates the current Stage A/B/C evidence ledger.
-- It may not compile because figures, commands, and environments are incomplete.
-- It must not be used as the current paper source without a full rewrite against [../doc/claims_ledger.md](../doc/claims_ledger.md).
-
-Current claim boundaries are defined in:
+Use these files instead:
 
 - [../doc/project_index.md](../doc/project_index.md)
 - [../doc/research_contract.md](../doc/research_contract.md)
 - [../doc/claims_ledger.md](../doc/claims_ledger.md)
+
+Any future manuscript should be written from the claim ledger and current
+evidence registry, not reconstructed from deleted historical prose.

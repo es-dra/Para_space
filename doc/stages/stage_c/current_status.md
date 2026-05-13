@@ -115,4 +115,7 @@ Pass conditions for any new gate:
 - Stage C artifact manifest: [../../evidence/analysis_manifest_stage_c.md](../../evidence/analysis_manifest_stage_c.md)
 - Decision record: [../../decisions/2026-05-08_stage_c_operationalization_failure.md](../../decisions/2026-05-08_stage_c_operationalization_failure.md)
 - C-minimal decision record: [../../decisions/2026-05-10_stage_c_lr_cell_feature_trajectory_result.md](../../decisions/2026-05-10_stage_c_lr_cell_feature_trajectory_result.md)
-- Archived stage notes: [../../archive/stage_summaries_2026-05-09/](../../archive/stage_summaries_2026-05-09/)
+
+Old Stage C diagnostic scripts, JSONs, patch crops, and interim archive notes
+were deleted during the 2026-05-11 cleanup after their conclusions were
+summarized in the files above.

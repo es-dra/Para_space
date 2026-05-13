@@ -54,7 +54,7 @@ def infer_family(summary: dict[str, Any], keys: set[str]) -> str:
         return "siren"
     if {"enc_snapshots", "dec_snapshots"}.issubset(keys):
         return "conditional"
-    if model_type in {"liif", "lte", "conditional", "pretrained_liif", "liif_eq"}:
+    if model_type in {"liif", "lte", "conditional"}:
         return "conditional"
     return "siren"
 
