@@ -1,60 +1,42 @@
 # Research Contract
 
-本文档固定当前项目的研究合同：研究什么、不研究什么、每个阶段能证明什么，以及哪些 claim 在当前证据下禁止。它应保持短而稳定；每日进展不要追加到这里。
+本文档固定白板重启后的研究边界。它只说明研究什么、暂时不研究什么、什么证据才算有效。
 
 ## Core Question
 
-在任意尺度 INR 超分中，模型从初始化或预训练状态到单图适配完成的 fitting / adaptation dynamics 是否存在可测、可解释、非平凡的参数或响应轨迹结构？
-
-在这个主问题之上，进一步问：这些轨迹结构是否能被图像内容、局部几何、尺度或旋转等数据因素解释；等变性是否会让这种关系更结构化、更可迁移，或更适合用于减少训练？
+在 INR / 任意尺度超分的单图拟合或适配过程中，参数、更新、响应或特征轨迹里是否存在可复现、非平凡、能被图像内容或局部结构解释的规律？
 
 ## Hypothesis Ladder
 
 | ID | 假设 | 当前状态 |
 |---|---|---|
-| H0 | 参数/响应 fitting dynamics 是否存在超过 endpoint drift、step norm schedule、优化平滑性和参数化伪影的非平凡结构 | 参数审计和 response 审计均完成首轮；有非随机结构但未通过 clean mechanism gate |
-| H1 | 局部几何相似 patch 是否对应 response/update similarity | Stage C pilot 中，当前操作化未过主证据标准 |
-| H2 | 尺度条件下的 response/update 是否有结构 | 未启动 |
-| H3 | 等变性是否正则化 geometry-response/update correspondence | blocked，等待 H1 操作化通过 |
-| H4 | 是否能预测部分更新并减少训练 | blocked，等待 H1-H3 足够证据 |
+| H0 | fitting / adaptation dynamics 是否有超过步长、终点漂移、层尺度和优化平滑性的结构 | 白板重启，未建立新证据 |
+| H1 | 图像内容或局部几何是否解释一部分 response / update 行为 | 白板重启，作为候选方向 |
+| H2 | 尺度条件下的 response / update 是否有稳定结构 | 未启动 |
+| H3 | 结构化架构是否让上述关系更清楚 | 暂不启动 |
+| H4 | 是否能利用这些规律减少训练或预测更新 | 暂不启动 |
 
-## Stage Boundaries
+## Active Scope
 
-| Stage | 当前可靠完成物 | 不允许外推 |
-|---|---|---|
-| A | 问题定义、假设、非目标、负对照、第一轮文献地图 | 论文级 related work、最终 baseline 表 |
-| B | scratch fitting-dynamics 平台、schema/summary/readiness checks、trajectory controls | 非平凡参数轨迹规律、局部几何机制、等变性、update prediction、training reduction |
-| B-prime | 参数审计完成；LIIF decoder 有 directed drift，但接近 endpoint/update-set controls 且 layer-scale dominated | 把该结果写成稳定低维参数规律，或据此重开 Stage C/等变性/训练加速 |
-| B-response | 函数响应审计完成；SIREN response 较 line-like，LIIF response 低秩但 encoder/decoder/interaction 不可简单分离 | 把 response 结构写成局部几何机制，或把 LIIF response 解释为 decoder-only |
-| C | pilot / failure audit；局部线索、明确 failure case、C-minimal LR-cell feature diagnostic mixed/inconclusive | 跨图像稳定规律、可用 predictor、机制结论 |
-| D | 未启动 | 任何性能或效率 claim |
+- 使用 scratch SIREN 和 scratch LIIF 作为基础观测平台。
+- 优先做小节点、短预算、强对照实验。
+- 新节点必须先说明研究对象、主指标、对照、成功/失败标准和产物位置。
 
 ## Non-Goals
 
-- 不把 PCA/PC1 作为科学机制证据。
-- 不在参数/响应轨迹对象未讲清楚前，把局部几何-response 结果当成主证据链。
+- 不把 PCA/PC1 当作机制证据。
+- 不把单张图片、单个 seed 或单个可视化当作稳定规律。
 - 不以 PSNR 排榜作为主贡献。
-- 不预设等变性一定改善参数/响应规律。
-- 不在前置 gate 未通过时讨论训练加速。
-- 不用 response-label oracle 结果伪装成可用方法。
-
-## Current Forbidden Claims
-
-- “发现了跨图像稳定的 geometry-response law。”
-- “PCA 证明参数空间低维结构。”
-- “baby/woman 正例证明 Set5 或自然图普遍成立。”
-- “bird/head 只是拟合质量差或个别异常。”
-- “受控 periodic positive 证明 geometry 机制。”
-- “C-minimal LR-cell feature diagnostic 已经解释 LIIF feature dynamics。”
-- “当前证据支持 LIIF-EQ / 等变性比较、update prediction 或训练加速。”
+- 不默认使用外部 checkpoint、等变路线、更新预测或训练加速路线。
+- 不从旧结果中继承正结论。
 
 ## Evidence Standard
 
-论文级 claim 至少需要：
+任何可升级为科研结论的 claim 至少需要：
 
-1. 明确参数、response 或 update object，并说明它为什么回答主问题；
-2. 多 seed 或多图像支持；
-3. 负对照通过；
-4. 与 content/coordinate/spatial confound 区分；
-5. 报告 failure cases；
-6. 对应 raw artifacts、analysis command 和 caveat 可追溯。
+1. 明确研究对象，例如参数、update、response、feature 或 Jacobian；
+2. 说明指标为什么回答主问题；
+3. 有正对照和负对照；
+4. 排除步长、层尺度、终点漂移、loss schedule、空间位置和内容偶然性等平凡解释；
+5. 至少覆盖多 seed 或多图像；
+6. 保留 command、seed、配置、输出目录、分析脚本和失败案例。

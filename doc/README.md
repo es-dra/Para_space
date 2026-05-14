@@ -1,17 +1,13 @@
 # Documentation Entry
 
-This directory is intentionally small at the active level. Start here:
+The project is in whiteboard restart mode. Start here:
 
-- Current project entry: [project_index.md](project_index.md)
-- Low-token current context: [current_context.md](current_context.md)
-- Research boundaries and forbidden claims: [research_contract.md](research_contract.md)
-- Claim/evidence status: [claims_ledger.md](claims_ledger.md)
-- Experiment and artifact registry: [evidence/experiment_registry.md](evidence/experiment_registry.md)
-- Durable decisions: [decisions/README.md](decisions/README.md)
-- Stage status summaries: [stages/](stages)
-- Reduced archive status: [archive/README.md](archive/README.md)
-- Engineering boundary: [Refactor_plan.md](Refactor_plan.md)
+- ARIS clean brief: [aris_project_brief.md](aris_project_brief.md)
+- ARIS research alignment: [aris_research_alignment.md](aris_research_alignment.md)
+- Research boundary: [research_contract.md](research_contract.md)
+- Stage A pilot closeout: [stages/stage_a/closeout.md](stages/stage_a/closeout.md)
+- Short negative history warning: [history_negative_summary.md](history_negative_summary.md)
+- Training entrypoints: [../experiments/Phase1_FittingDynamics/README.md](../experiments/Phase1_FittingDynamics/README.md)
 
-Historical logs, old plans, obsolete protocols, and tool-specific rule files are
-not kept by default. If their conclusions are already represented by canonical
-files, the full intermediate material should be deleted rather than archived.
+Old detailed evidence chains and route narratives were removed from the active
+entry surface so that future ARIS work starts from a clean research brief.

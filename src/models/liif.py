@@ -139,7 +139,7 @@ class LIIFModel(nn.Module):
     """Full LIIF model with EDSR encoder, feature unfold, local ensemble,
     cell decode, and MLP decoder.
 
-    Input/Output convention (matching pretrained models):
+    Input/Output convention (matching common LIIF implementations):
       - Image input:  [0, 1] → internally normalized to [-1, 1]
       - Coordinates:  [-1, 1]
       - Cell:         (2/hr_h, 2/hr_w) in normalized coords

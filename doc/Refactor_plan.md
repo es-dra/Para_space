@@ -1,37 +1,35 @@
 # Engineering Boundary And Refactor Plan
 
-本文档只记录当前代码工程边界。它不是研究结论文档，也不是实验日志。科学结论以 [claims_ledger.md](claims_ledger.md) 和 [stages/](stages) 为准。
+本文档只记录白板重启后的工程边界。它不是研究结论文档，也不是实验日志。
 
 ## Current Role
 
-当前代码库应被视为 fitting-dynamics probing platform，而不是已经完成的训练加速或等变性方法库。
+当前代码库是 scratch fitting-dynamics probing platform。它还不是训练加速方法库，也没有可继承的机制结论。
 
 工程目标：
 
-- 保持 Stage B/C 已有结果可读、可检查、可复现；
-- 避免大规模迁移破坏旧 artifact；
-- 只在测试保护下抽取公共模块；
-- 不为尚未通过 gate 的科学路线提前设计复杂框架。
-- 保持活跃代码面小而清楚；已停止的分析分支应删除或从入口文档移除，而不是继续作为可运行选项存在。
+- 保持活跃入口小而清楚；
+- 保留 scratch SIREN / LIIF 训练和输出检查能力；
+- 删除已经停止的分析分支，而不是让它们继续作为可运行选项存在；
+- 新分析必须先有清楚的问题、输入、输出、对照和停止条件。
 
 ## Active Code Surfaces
 
 | Area | Path | Status |
 |---|---|---|
 | Core library | `src/` | Keep stable; changes require tests |
-| Training entrypoints | `experiments/Phase1_FittingDynamics/run.py`, `run_siren.py` | Official for scratch reduced LIIF and SIREN evidence |
-| Validation / analysis | `check_outputs.py`, `analyze_stage_b_controls.py`, `analyze_stage_b_trajectory_audit.py`, `analyze_stage_b_response_audit.py`, `analyze_stage_b_liif_unit_audit.py` | Official Stage B validation / audit CLIs |
-| Retired analysis | old Stage C natural-image repair scripts, old controlled self-similarity scripts, `aggregate_results.py`, `viz_trajectory.py`, `run_finetune.py` | Deleted from active code surface |
-| Tests | `tests/` | Required for schema, controls, and retained Stage B analysis logic |
+| Training entrypoints | `experiments/Phase1_FittingDynamics/run.py`, `run_siren.py` | Retained scratch training CLIs |
+| Validation | `experiments/Phase1_FittingDynamics/check_outputs.py` | Retained output/schema check |
+| Tests | `tests/` | Basic schema, alignment, and output validation |
 
 See [../experiments/Phase1_FittingDynamics/README.md](../experiments/Phase1_FittingDynamics/README.md) for entrypoint classification.
 
 ## Non-Negotiable Constraints
 
 1. Do not change existing `trajectory.npz` or `dynamics_summary.json` semantics without a migration note and tests.
-2. Do not revive PCA, pretrained LIIF/LIIF-EQ, equivariance comparison, update prediction, or training acceleration as active routes unless [claims_ledger.md](claims_ledger.md) gates are updated.
+2. Do not revive PCA, external checkpoints, equivariant comparisons, update prediction, or training acceleration as active routes unless a new node contract authorizes them.
 3. Do not add one-off launchers, scratch dispatchers, or nohup wrappers.
-4. Do not move or delete `Data/`, `model/`, or `pretrained/` without an artifact mapping and explicit approval. Generated `results/` subtrees that are smoke/debug, legacy, or retired diagnostics should be deleted unless they are current canonical evidence.
+4. Do not delete `Data/` without explicit approval.
 5. Keep new analysis as named Python CLIs with clear inputs, outputs, and stop conditions.
 6. Keep workflow rules out of project docs unless they are project-specific facts.
 
@@ -77,8 +75,7 @@ Deferred:
 1. YAML/config-system migration.
 2. Large package split under `src/paramspace`, `src/geometry`, `src/response`, etc.
 3. Adapter/modulation implementation.
-4. LIIF-EQ buffer/state policy changes.
-5. Pretrained fine-tuning evidence.
+4. External-checkpoint fine-tuning evidence.
 
 ## Validation Commands
 
@@ -116,7 +113,5 @@ PY
 For analysis/script behavior changes:
 
 ```bash
-pytest -q tests/test_stage_b_controls.py tests/test_stage_b_trajectory_audit.py \
-  tests/test_stage_b_response_audit.py tests/test_stage_b_liif_unit_audit.py \
-  tests/test_check_outputs.py tests/test_trajectory_schema.py
+pytest -q tests/test_check_outputs.py tests/test_trajectory_schema.py tests/test_alignment.py
 ```

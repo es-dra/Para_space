@@ -14,4 +14,7 @@ model/
 pretrained/**/*.pth
 .claude/settings.json
 .claude/settings.local.json
+.claude/sessions/
 claude-wrapper.sh
+.agents/
+.aris/

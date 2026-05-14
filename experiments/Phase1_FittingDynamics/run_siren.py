@@ -63,6 +63,7 @@ def run_siren_dynamics(
     device="cuda",
     save_dir=None,
     total_steps=None,
+    scheduler_type="cosine",
 ):
     set_seed(seed)
     device = torch.device(device)
@@ -83,13 +84,19 @@ def run_siren_dynamics(
     print(f"Image: {Path(image_path).name}, Size: {image_size}x{image_size}")
     print(f"Total params: {n_params:,}")
     print(f"Total steps: {total_steps}, Snapshots: {len(snapshot_steps_list)} (geometric)")
+    print(f"Scheduler: {scheduler_type}")
     print(f"{'='*60}")
 
     coords = get_image_coordinates(H, W, normalize="center", device=device).reshape(-1, 2)
     target = image_tensor.reshape(C, -1).T
 
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg["lr"])
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps)
+    if scheduler_type == "cosine":
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps)
+    elif scheduler_type == "constant":
+        scheduler = None
+    else:
+        raise ValueError(f"Unknown scheduler_type: {scheduler_type}")
 
     theta_0 = model.get_params()
     theta_0_flat = flatten_params(theta_0).cpu().numpy()
@@ -118,7 +125,8 @@ def run_siren_dynamics(
         loss.backward()
         grad_norm = compute_grad_norm(model)
         optimizer.step()
-        scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
         losses.append(float(loss.detach().cpu()))
 
         if step in snapshot_steps_list:
@@ -191,6 +199,8 @@ def run_siren_dynamics(
             "siren_config": SIREN_CONFIG,
             "image_size": image_size,
             "total_steps": total_steps,
+            "scheduler": scheduler_type,
+            "lr": cfg["lr"],
             "planned_snapshot_steps": snapshot_steps_list,
             "n_snapshots": n_snapshots,
             "alignment": "hungarian+signflip",
@@ -224,6 +234,13 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--steps", type=int, default=None)
+    parser.add_argument(
+        "--scheduler",
+        type=str,
+        default="cosine",
+        choices=["cosine", "constant"],
+        help="Learning-rate schedule. Default preserves the historical cosine schedule.",
+    )
     parser.add_argument("--save_dir", type=str, default=None)
     args = parser.parse_args()
 
@@ -249,6 +266,7 @@ def main():
         device=device,
         save_dir=save_dir,
         total_steps=args.steps,
+        scheduler_type=args.scheduler,
     )
 
 

@@ -16,17 +16,18 @@ It does not establish:
 
 - paper-ready related work;
 - final baseline table;
-- verified LIIF-EQ / SE-INR provenance;
+- verified external-checkpoint provenance;
 - any empirical mechanism claim.
 
 ## Canonical Inputs
 
 - Current project contract: [../../research_contract.md](../../research_contract.md)
-- Claim boundary: [../../claims_ledger.md](../../claims_ledger.md)
-- Project index: [../../project_index.md](../../project_index.md)
+- Clean ARIS brief: [../../aris_project_brief.md](../../aris_project_brief.md)
+- Negative history warning: [../../history_negative_summary.md](../../history_negative_summary.md)
 
-Historical Stage A drafts were deleted during the 2026-05-11 cleanup after their
-current conclusions were consolidated here and in the research contract.
+Historical Stage A drafts are not active entry points. The useful retained part
+is the problem boundary and hypothesis ladder summarized here and in the
+research contract.
 
 ## Reliable Conclusions
 
@@ -54,7 +55,8 @@ This map is sufficient for pilot design only. It must be converted into a verifi
 
 - Literature coverage is not paper-complete.
 - Some bib entries and recent arbitrary-scale SR methods need final verification.
-- Current pretrained LIIF-EQ / SE-INR source, checkpoint and fairness protocol remain unresolved.
+- External checkpoint provenance and fairness protocol remain unresolved and are
+  outside the default restart scope.
 
 ## Allowed Wording
 
