@@ -32,12 +32,16 @@ def _forward(P, X, omega):
 
 
 def fit(images: np.ndarray, steps=2000, lr=1e-3, hidden=32, hidden_layers=1, omega=siren.OMEGA, seed=0,
-        init: list | None = None, log_every=0, masks: np.ndarray | None = None, harmonic_penalty=0.0):
+        init: list | None = None, log_every=0, masks: np.ndarray | None = None, harmonic_penalty=0.0,
+        swing_bound: float = 0.0):
     """images: (B, H, W). Returns (list of float32 param dicts, per-network final MSE).
 
     harmonic_penalty: lambda (scalar or per-network array) on the mean harmonic index of the hidden sine
     layers, lambda * mean_j sum_i |omega W_k[i, j]| for k = 2..L-1. It keeps hidden units near the linear
-    regime of the sine, where layer-local weight-space programs stay exact ("editable" training)."""
+    regime of the sine, where layer-local weight-space programs stay exact ("editable" training).
+    swing_bound: if > 0, after every step each hidden unit's incoming weights (k = 2..L-1) are rescaled so that
+    its harmonic index sum_i |omega W_k[i, j]| does not exceed the bound (a projection, not a penalty: no unit
+    is switched off, every unit is kept within the bound)."""
     B, H, W = images.shape
     N = H * W
     X = np.broadcast_to(grid(H), (B, N, 2)).astype(np.float64)
@@ -82,6 +86,10 @@ def fit(images: np.ndarray, steps=2000, lr=1e-3, hidden=32, hidden_layers=1, ome
             mh = m[k] / (1 - b1 ** it)
             vh = v[k] / (1 - b2 ** it)
             P[k] -= lr * mh / (np.sqrt(vh) + eps)
+        if swing_bound > 0:
+            for k in range(2, L):
+                s_unit = omega * np.abs(P[f"W{k}"]).sum(axis=1, keepdims=True)      # (B, 1, units)
+                P[f"W{k}"] *= np.minimum(1.0, swing_bound / np.maximum(s_unit, 1e-12))
         if log_every and it % log_every == 0:
             per = ((y - T) ** 2).mean(axis=(1, 2))
             print(f"step {it}: mean mse {per.mean():.5f} worst {per.max():.5f}", flush=True)

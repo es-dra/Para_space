@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--backend", choices=["torch", "np"], default="torch")
     ap.add_argument("--harmonic-penalty", type=float, default=0.0, help="NumPy backend only")
+    ap.add_argument("--swing-bound", type=float, default=0.0, help="NumPy backend only: projection bound on each hidden unit's harmonic index")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.backend == "torch":
@@ -36,7 +37,7 @@ def main():
         extra = {"device": a.device}
     else:
         from wsinr.zoo_np import fit
-        extra = {"harmonic_penalty": a.harmonic_penalty}
+        extra = {"harmonic_penalty": a.harmonic_penalty, "swing_bound": a.swing_bound}
 
     x, y = load_mnist(a.mnist, a.split)
     idx = np.arange(a.offset, a.offset + a.n)
@@ -53,7 +54,7 @@ def main():
         name = f"{a.split}_{idx[i]:05d}"
         siren.save_npz(os.path.join(a.out, name + ".npz"), p, label=int(labels[i]), index=int(idx[i]),
                        split=a.split, fit_mse=fit_mse, steps=a.steps, lr=a.lr, seed=a.seed,
-                       harmonic_penalty=a.harmonic_penalty)
+                       harmonic_penalty=a.harmonic_penalty, swing_bound=a.swing_bound)
         rows.append({"name": name, "label": int(labels[i]), "fit_mse": fit_mse,
                      "psnr": float(10 * np.log10(1 / max(fit_mse, 1e-12)))})
     meta = {"config": vars(a), "n_params": siren.count_params(params[0]), "seconds": dt,
