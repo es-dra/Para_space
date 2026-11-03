@@ -24,8 +24,9 @@ Reading: name the digit stored in a network from its weights alone; draw it.
 | `wsinr/oracle.py` | closed-form edits and function-preserving symmetries |
 | `wsinr/tasks.py` | task registry: target transform, oracle, validity mask, instruction text |
 | `wsinr/prompt.py`, `wsinr/edits.py` | prompts in the Sparks style; the `edits` mini-language and its interpreter |
-| `wsinr/zoo.py`, `wsinr/baselines/finetune.py` | batched SIREN fitting and Adam fine-tuning (PyTorch) |
-| `wsinr/harness/run.py` | tool-free one-reply runs through Claude Code (`--tools ""`), the Anthropic API or an OpenAI-compatible API, with a run record per case |
+| `wsinr/zoo.py`, `wsinr/zoo_np.py`, `wsinr/baselines/` | batched SIREN fitting (PyTorch or NumPy), Adam fine-tuning, frozen-dictionary least squares |
+| `wsinr/align.py` | permutation and sign alignment of two SIRENs |
+| `wsinr/harness/` | `run.py` tool-free one-reply runs; `kernel.py` the restricted Python kernel; `forward.py` the budgeted forward-pass tool; `session.py` the multi-turn driver and backends |
 | `scripts/` | `build_zoo.py`, `eval_baselines.py`, `make_prompts.py`, `score.py` |
 | `studies/` | frozen protocols and predictions, one folder per stage |
 
@@ -41,6 +42,22 @@ python scripts/score.py --prompts prompts/pilot --out results/pilot_scores.json
 ```
 
 `Data/mnist` holds the four original idx `.gz` files.
+
+## Protocols
+
+| Protocol | What the model has | Script |
+| --- | --- | --- |
+| tool-free | the weights as text, one reply, an `edits` block | `wsinr/harness/run.py` |
+| sandbox-noforward | a persistent Python kernel over the weights (no autograd, optimizers, least squares or fitting; `sin`/`cos` refused so the network cannot be evaluated) | `scripts/run_sandbox.py --protocol sandbox-noforward` |
+| sandbox-forward | the kernel plus a forward-pass tool with a budget of `--passes` requests (render the grid, or probe up to 256 points with hidden activations) | `scripts/run_sandbox.py --protocol sandbox-forward --passes k` |
+
+Every session is logged turn by turn (`turns/tNNN/{prompt.txt,answer.md,run.json}`, `tool_calls.jsonl`, `state.json`, `final_answer.md`, `work/edited/*.npy`), after the audit format of the Sparks logs. Backends: the Anthropic API (`ANTHROPIC_API_KEY`) and any OpenAI-compatible endpoint (`OPENAI_API_KEY`, `OPENAI_BASE_URL`). Reference rows for every task come from `scripts/eval_baselines.py`: no edit, closed-form oracle where one exists, the frozen-dictionary bound (least squares on the readout only), and Adam fine-tuning at 10/50/200 steps, which is the budget-matched comparison for `--passes`.
+
+```bash
+python scripts/run_sandbox.py --zoo zoo/mnist_s32 --n 3 --tasks dilate blur_1 --protocol sandbox-noforward \
+    --backend anthropic --model claude-sonnet-5-5 --max-runs 30 --out runs/sb0
+python scripts/score.py --prompts runs/sb0 --out results/sb0_scores.json
+```
 
 ## Conventions
 

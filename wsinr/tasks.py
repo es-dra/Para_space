@@ -114,7 +114,8 @@ def make_tasks(side: int = 28) -> dict:
     add(Task("erode", 2, "Thin the bright strokes: replace every grey value by the minimum over its 3 x 3 pixel neighbourhood (morphological erosion).",
              lambda im: ndimage.grey_erosion(im, size=(3, 3)), None, tags=("morphology",)))
     add(Task("blur_1", 2, "Blur the picture with a Gaussian of standard deviation 1 pixel.",
-             lambda im: ndimage.gaussian_filter(im, 1.0), None, tags=("filter",)))
+             lambda im: ndimage.gaussian_filter(im, 1.0), lambda e: oracle.lowpass_gauss(e, 1.0, side),
+             tags=("filter",)))  # the oracle is exact only for shallow (one sine layer) networks; None otherwise
     add(Task("threshold", 2, "Binarise the picture: grey values above 0.5 become 1, the rest 0.",
              lambda im: (im > 0.5).astype(np.float64), None, tags=("value",)))
     return T

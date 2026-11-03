@@ -120,3 +120,19 @@ def sign_flip_hidden(eff, layer: int, units):
     out[f"c{layer}"][units] *= -1
     out[f"A{layer + 1}"][units, :] *= -1
     return out
+
+
+def lowpass_gauss(eff, sigma_pix: float, side: int = 28):
+    """Gaussian blur for a SHALLOW SIREN (one sine layer + linear readout): a plane wave
+    sin(w.p + c) blurred by an isotropic Gaussian of std sigma is the same wave scaled by
+    exp(-|w|^2 sigma^2 / 2). Exact in function space (sampled target). For deeper SIRENs the
+    second sine layer creates harmonics and no such closed form exists; the function returns
+    None so that the task registry can mark it as oracle-free."""
+    if _last(eff) != 2:
+        return None
+    out = _copy(eff)
+    sigma = sigma_pix * 2.0 / (side - 1)
+    w2 = (eff["A1"] ** 2).sum(axis=0)
+    out["A2"] = eff["A2"] * np.exp(-0.5 * w2 * sigma ** 2)[:, None]
+    # the constant term c2 is unchanged by blurring
+    return out

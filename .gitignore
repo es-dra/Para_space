@@ -7,3 +7,4 @@ prompts/
 *.log
 .DS_Store
 memory/
+runs/
