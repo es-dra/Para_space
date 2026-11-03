@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: wsinr
+Version: 0.0.1
+Summary: Weight-space programming for implicit neural representations
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: scipy
+Dynamic: license-file

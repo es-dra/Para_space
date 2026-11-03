@@ -1,0 +1,12 @@
+Reasoning: A 3 x 3 max filter is a spatial, non-linear operation. The SIREN cannot form the max of nine shifted copies of itself: a single coordinate shift is possible (adding d @ A1 to c1), but a sum or max of several shifts would need extra hidden units, which the architecture does not have. Damping or rescaling the first-layer frequencies would blur or zoom the picture rather than dilate it, and the second sine layer mixes those units unpredictably without computation. So I cannot change the spatial support of the strokes reliably; what I can do without running anything is act on the output layer, which is the only linear, exactly predictable part of the network.
+
+Dilation of a mostly-binary stroke picture has two effects on pixel values: (1) every pixel that was partly bright (anti-aliased stroke edges, faint halo around strokes) becomes fully bright, because it is adjacent to a bright pixel; (2) a ring of formerly dark pixels around each stroke becomes bright, while the far background (all nine neighbours dark) stays at 0. A pointwise map v' = g*v + b followed by the clip to [0,1] reproduces (1) well when g is around 3: edge values of 0.3 to 0.9 saturate to 1, halo values of about 0.1 rise to about 0.4, interior stroke pixels stay at 1. It cannot reproduce (2) spatially, but a small positive bias b hedges the new ring: the expected error of a pixel that is 0 in my rendering but 1 in the target drops from 1 to (1-b)^2, while the far background only pays b^2 plus amplified SIREN noise. With a ring fraction of roughly 15 percent of the grid and background about 60 percent, g = 3 and b near 0.08 to 0.1 are a favourable trade.
+
+v' = g*(h2 @ A3 + c3) + b = h2 @ (g*A3) + (g*c3 + b). With g = 3, c3 = 0.1014, b = 0.08: new c3 = 0.3042 + 0.08 = 0.3842. Only A3 and c3 change; A1, c1, A2, c2 are untouched so the geometry of the picture is preserved.
+
+```edits
+A3[:, :] *= 3
+c3[0] = 0.3842
+```
+
+The edits triple the output layer's gain and reset the output bias so that v' = 3 v + 0.08. Partly bright stroke edges and the faint halo around strokes are pushed to white (clipped at 1), which is what dilation does to those pixels, so the visible strokes thicken; fully bright interiors stay white. The small positive offset lowers the expected squared error on the one-pixel ring that dilation adds around each stroke, at a small cost on the far background, which stays near black because negative pre-clip values remain clipped to 0.

@@ -1,0 +1,9 @@
+Reasoning: The rendered grid spaces pixels 2/27 apart in x, so a shift of +4 pixels to the right means the new picture g satisfies g(y, x) = f(y, x - 8/27), with delta = 8/27 = 0.2963 in coordinate units (and no change in y). The only place the input coordinates enter the network is the first layer, h1 = sin(y*A1[0,j] + x*A1[1,j] + c1[j]). Substituting x -> x - delta gives sin(y*A1[0,j] + x*A1[1,j] + (c1[j] - delta*A1[1,j])), so the whole transformation is absorbed exactly by the first-layer biases: c1[j] -= 0.2963 * A1[1,j] for every unit j. A1, A2, c2, A3 and c3 are untouched, so the picture content is unchanged apart from the translation. The four uncovered columns on the left (j = 0..3) sample the original network at x < -1, outside its training domain; the architecture offers no clean way to force them to black, so they are left to the network's extrapolation (for a typical picture with a dark border this is close to black).
+
+Computed values (c1_new = c1_old - 0.296296 * A1[1,j]):
+
+```edits
+c1[0:32] = [5.1298, -2.9610, -18.6840, 11.4055, 15.8578, 17.7905, 3.3137, 7.4194, 13.8612, -0.6633, -13.2131, -8.0993, 12.0400, 8.0901, -17.8651, -12.2071, -9.5700, 24.0338, -18.3282, -19.3289, -16.5156, 14.4538, 15.4408, -16.9922, -16.8714, 11.2756, -6.7531, -14.6671, 15.8378, -14.0530, -5.1037, -9.5194]
+```
+
+The edits replace all 32 first-layer biases with c1[j] - (8/27)*A1[1,j], where A1[1,j] is the weight on x. This is the exact weight-space realisation of the input substitution x -> x - 8/27, i.e. a rightward translation by 4 pixels on the 28 x 28 grid; vertical shift is zero so the y-weights contribute nothing. Every other tensor is unchanged, so the content of the picture is preserved and only its position moves. The leftmost four columns come from extrapolation of the original network beyond x = -1.

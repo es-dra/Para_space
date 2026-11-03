@@ -1,0 +1,96 @@
+{
+ "zoo": "zoo/mnist_s32",
+ "decimals": 4,
+ "cases": {
+  "flip_lr_c80f8881": {
+   "file": "test_00000.npz",
+   "label": 7,
+   "kind": "edit",
+   "task": "flip_lr"
+  },
+  "negative_c80f8881": {
+   "file": "test_00000.npz",
+   "label": 7,
+   "kind": "edit",
+   "task": "negative"
+  },
+  "contrast_2_c80f8881": {
+   "file": "test_00000.npz",
+   "label": 7,
+   "kind": "edit",
+   "task": "contrast_2"
+  },
+  "shift_p0_p4_c80f8881": {
+   "file": "test_00000.npz",
+   "label": 7,
+   "kind": "edit",
+   "task": "shift_p0_p4"
+  },
+  "dilate_c80f8881": {
+   "file": "test_00000.npz",
+   "label": 7,
+   "kind": "edit",
+   "task": "dilate"
+  },
+  "flip_lr_eb6c4cdc": {
+   "file": "test_00001.npz",
+   "label": 2,
+   "kind": "edit",
+   "task": "flip_lr"
+  },
+  "negative_eb6c4cdc": {
+   "file": "test_00001.npz",
+   "label": 2,
+   "kind": "edit",
+   "task": "negative"
+  },
+  "contrast_2_eb6c4cdc": {
+   "file": "test_00001.npz",
+   "label": 2,
+   "kind": "edit",
+   "task": "contrast_2"
+  },
+  "shift_p0_p4_eb6c4cdc": {
+   "file": "test_00001.npz",
+   "label": 2,
+   "kind": "edit",
+   "task": "shift_p0_p4"
+  },
+  "dilate_eb6c4cdc": {
+   "file": "test_00001.npz",
+   "label": 2,
+   "kind": "edit",
+   "task": "dilate"
+  },
+  "flip_lr_2466f14a": {
+   "file": "test_00002.npz",
+   "label": 1,
+   "kind": "edit",
+   "task": "flip_lr"
+  },
+  "negative_2466f14a": {
+   "file": "test_00002.npz",
+   "label": 1,
+   "kind": "edit",
+   "task": "negative"
+  },
+  "contrast_2_2466f14a": {
+   "file": "test_00002.npz",
+   "label": 1,
+   "kind": "edit",
+   "task": "contrast_2"
+  },
+  "shift_p0_p4_2466f14a": {
+   "file": "test_00002.npz",
+   "label": 1,
+   "kind": "edit",
+   "task": "shift_p0_p4"
+  },
+  "dilate_2466f14a": {
+   "file": "test_00002.npz",
+   "label": 1,
+   "kind": "edit",
+   "task": "dilate"
+  }
+ }
+}

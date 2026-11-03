@@ -1,0 +1,164 @@
+{
+ "flip_lr_c80f8881": {
+  "no_edit_mse": 0.08553681318663758,
+  "status": "ok",
+  "mse": 2.264927085001803e-31,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.9336537350801424,
+  "oracle_mse": 2.264927085001803e-31,
+  "task": "flip_lr"
+ },
+ "negative_c80f8881": {
+  "no_edit_mse": 0.9304914800232846,
+  "status": "ok",
+  "mse": 2.764641864198731e-10,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.31732117149123634,
+  "oracle_mse": 3.0941802407184295e-17,
+  "task": "negative"
+ },
+ "contrast_2_c80f8881": {
+  "no_edit_mse": 0.0027391639767599075,
+  "status": "ok",
+  "mse": 7.641847189056777e-11,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.15866943365069633,
+  "oracle_mse": 8.49660477818441e-18,
+  "task": "contrast_2"
+ },
+ "shift_p0_p4_c80f8881": {
+  "no_edit_mse": 0.12522590249969245,
+  "status": "ok",
+  "mse": 1.7186767606436626e-10,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.1383188409570213,
+  "oracle_mse": 1.2223493060193832e-14,
+  "task": "shift_p0_p4"
+ },
+ "dilate_c80f8881": {
+  "no_edit_mse": 0.08121957840597023,
+  "status": "ok",
+  "mse": 0.05859687376587019,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.3024137719198278,
+  "task": "dilate"
+ },
+ "flip_lr_eb6c4cdc": {
+  "no_edit_mse": 0.1245263567940442,
+  "status": "ok",
+  "mse": 2.4886626000128813e-31,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.970610153764477,
+  "oracle_mse": 2.4886626000128813e-31,
+  "task": "flip_lr"
+ },
+ "negative_eb6c4cdc": {
+  "no_edit_mse": 0.9183241445405135,
+  "status": "ok",
+  "mse": 6.316974994989585e-10,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.2583807541268214,
+  "oracle_mse": 3.384480904361684e-17,
+  "task": "negative"
+ },
+ "contrast_2_eb6c4cdc": {
+  "no_edit_mse": 0.0018747562249205765,
+  "status": "ok",
+  "mse": 2.373909637459865e-10,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.12917947180227302,
+  "oracle_mse": 1.3311347499678926e-17,
+  "task": "contrast_2"
+ },
+ "shift_p0_p4_eb6c4cdc": {
+  "no_edit_mse": 0.1742295777342286,
+  "status": "ok",
+  "mse": 1.6437858475286445e-10,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.14379465991308366,
+  "oracle_mse": 1.2593498737605876e-14,
+  "task": "shift_p0_p4"
+ },
+ "dilate_eb6c4cdc": {
+  "no_edit_mse": 0.10524057949043747,
+  "status": "ok",
+  "mse": 0.06871939142070069,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.15857810020963972,
+  "task": "dilate"
+ },
+ "flip_lr_2466f14a": {
+  "no_edit_mse": 0.058717345272539585,
+  "status": "ok",
+  "mse": 1.593769056698672e-31,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.9292906814376203,
+  "oracle_mse": 1.593769056698672e-31,
+  "task": "flip_lr"
+ },
+ "negative_2466f14a": {
+  "no_edit_mse": 0.9574293619304208,
+  "status": "ok",
+  "mse": 4.924774844633568e-10,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.26982465679026396,
+  "oracle_mse": 2.529864073332707e-16,
+  "task": "negative"
+ },
+ "contrast_2_2466f14a": {
+  "no_edit_mse": 0.0013069431021549313,
+  "status": "ok",
+  "mse": 1.0954601115110481e-10,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.1349242376390494,
+  "oracle_mse": 6.230843507659502e-18,
+  "task": "contrast_2"
+ },
+ "shift_p0_p4_2466f14a": {
+  "no_edit_mse": 0.0912306763197771,
+  "status": "ok",
+  "mse": 1.4523816284872483e-10,
+  "applied": 1,
+  "errors": [],
+  "frac_changed": 0.0270042194092827,
+  "rel_l2": 0.13767315243669667,
+  "oracle_mse": 3.696279461760579e-15,
+  "task": "shift_p0_p4"
+ },
+ "dilate_2466f14a": {
+  "no_edit_mse": 0.05208337474725505,
+  "status": "ok",
+  "mse": 0.03595970609704447,
+  "applied": 2,
+  "errors": [],
+  "frac_changed": 0.027848101265822784,
+  "rel_l2": 0.14631777060833695,
+  "task": "dilate"
+ }
+}

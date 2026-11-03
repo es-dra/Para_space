@@ -1,0 +1,19 @@
+{
+ "version": "claude-20261103-wsinr-pilot-v0",
+ "status": "internal feasibility probe; not paper data",
+ "question": "Given only the weights of a small SIREN image representation (2 -> 32 -> 32 -> 1, omega 30, 1,185 weights, MNIST), can a frontier LLM, with no tools and one reply, (a) say which digit it stores and (b) edit the weights to transform the picture?",
+ "editor": "the model serving this Claude Code session, run as a fresh subagent with the instruction to use no tools (not enforced by a harness; a proper run uses wsinr/harness/run.py with --tools '' and an audit)",
+ "zoo": "scripts/build_zoo.py on MNIST test images 0..199, 2000 Adam steps at lr 1e-3, seed 0",
+ "cases": {
+  "read_digit": "5 networks (one per 5 distinct labels)",
+  "edit_level0": "flip_lr, negative, contrast_2, shift_p0_p4 on 3 networks each",
+  "edit_level2": "dilate on 3 networks"
+ },
+ "scoring": "scripts/score.py: MSE between the edited network's 28x28 rendering and the transformed rendering of the original network (masked where the transform leaves pixels undefined); reference rows from scripts/eval_baselines.py: no-edit, closed-form oracle, Adam fine-tuning for 10/50/200/1000 steps",
+ "predictions_frozen_before_running": {
+  "P1_level0": "On flip_lr, negative and contrast_2 the editor reaches MSE within 2x of the oracle in at least 7 of 9 cases (these edits have one-line closed forms on A1 or A3/c3). On shift_p0_p4 it reaches below the no-edit MSE in at least 2 of 3 cases but not within 2x of the oracle in all 3 (the bias shift c1 -= d @ A1 needs 32 arithmetic results).",
+  "P2_level2": "On dilate the editor beats no-edit MSE in at most 1 of 3 cases and never reaches the 200-step fine-tune MSE: there is no local closed form, and reading the picture from the weights is required.",
+  "P3_read": "Digit identification is at or near chance: at most 2 of 5 correct. Prior: INR weight space is hard to read (graph metanetworks reach ~37% on CIFAR INRs vs ~99% on pixels, arXiv 2503.09120); unlike the policy networks of the Sparks experiments, nothing in a SIREN's first layer is spatially indexed."
+ },
+ "decision_rule": "If P1 holds and P3 fails upward (reading works better than chance), the paper's centre is 'LLMs can read INRs' and the benchmark grows on the reading side. If P1 holds and P3 holds, the centre is a graded editing benchmark separating closed-form (programmable) from semantic edits, with reading as a negative result. If P1 fails, the tool-free one-shot protocol is too hard for arithmetic-heavy edits and the sandbox protocol (Python, no forward pass) becomes the primary setting."
+}

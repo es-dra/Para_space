@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wsinr"
+version = "0.0.1"
+description = "Weight-space programming for implicit neural representations"
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy"]
+
+[tool.setuptools.packages.find]
+include = ["wsinr*"]
