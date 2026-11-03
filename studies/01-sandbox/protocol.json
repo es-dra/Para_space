@@ -1,0 +1,45 @@
+{
+ "version": "claude-20261103-wsinr-sandbox-v1",
+ "status": "frozen before any API run; go/no-go for the study",
+ "question": "With a Python kernel over the weights (no gradients, no fitting, no least squares) and either no forward pass or a budget of 10 forward passes, can a frontier LLM (a) read what a SIREN stores and (b) implement spectrum-changing edits (blur, morphology, thresholding) that the tool-free one-reply protocol could not, and how does it compare with budget-matched Adam fine-tuning?",
+ "zoos": {
+  "deep": "zoo/mnist_s32 (2-32-32-1, omega 30, 1,185 weights), networks test_00000..test_00019",
+  "shallow": "zoo/mnist_shallow64 (2-64-1, omega 30, 257 weights; one sine layer + linear readout, so Gaussian blur has the closed form A2_i *= exp(-|w_i|^2 sigma^2 / 2)), networks test_00000..test_00019"
+ },
+ "editor_models": {
+  "primary": "claude-sonnet-5-5 via the Anthropic API, extended thinking, effort high (24k thinking budget), max 32k output tokens per turn",
+  "secondary": "claude-opus-5-5 on the first 10 networks of each cell marked [opus]",
+  "system_prompt": "Answer the user's request.",
+  "weights_in_prompt": true
+ },
+ "protocols": {
+  "sandbox-noforward": "wsinr.harness.kernel with no_forward=True; at most 30 code runs; sin/cos/sinc refused",
+  "sandbox-forward": "the same kernel plus wsinr.harness.forward with 10 passes; at most 40 code runs"
+ },
+ "cells": {
+  "E1_blur_shallow": "shallow zoo, blur_1, sandbox-noforward [opus]",
+  "E2_blur_deep": "deep zoo, blur_1, sandbox-noforward",
+  "E3_morphology": "deep zoo, dilate, erode, threshold, sandbox-noforward and sandbox-forward(10) [opus: dilate only]",
+  "E4_level1": "deep zoo, rotate_30, zoom_0.7, sandbox-noforward",
+  "E5_control": "deep zoo, shift_m3_p3, sandbox-noforward (must stay solved)",
+  "R1_read": "deep zoo, read_digit, sandbox-noforward and sandbox-forward(10) [opus: noforward]",
+  "R0_null": "20 networks with the same shapes but freshly initialised weights (no image), read_digit, sandbox-noforward: the model's label prior"
+ },
+ "scoring": "scripts/score.py: MSE between the submitted network's 28x28 rendering and the transformed rendering of the original (masked where undefined). Reference rows from scripts/eval_baselines.py on the same 20 networks: no_edit, oracle, lastlayer_lstsq (frozen-dictionary bound), finetune at 10/50/200 Adam steps. Paired comparisons per network; image-bootstrap 95% intervals over the 20 networks.",
+ "predictions_frozen_before_running": {
+  "P1_shallow_blur_programmable": "E1: the editor reaches MSE within 3x of the low-pass oracle on at least 10 of 20 shallow networks (the attenuation rule follows from the plane-wave form of the first layer and needs no forward pass).",
+  "P2_deep_blur_not_programmable": "E2: on at least 15 of 20 deep networks the editor's MSE stays above the frozen-dictionary bound (lastlayer_lstsq): without a closed form it will not find hidden-layer edits that beat refitting the readout.",
+  "P3_budget_matched_loss": "E3 with 10 passes: the median MSE over networks is worse than Adam 10 steps on all three tasks, and better than no_edit on at least half of the (task, network) pairs. The gap to Adam is reported as the cost of an explainable edit.",
+  "P4_arithmetic_barrier_removed": "E4: rotate_30 and zoom_0.7 reach within 2x of the sampled-target oracle on at least 16 of 20 networks each (the sandbox removes the hand-arithmetic limit of the tool-free protocol).",
+  "P5_reading_at_chance": "R1 (noforward): digit accuracy at most 6 of 20, and the 95% interval of accuracy minus the R0 null rate covers zero. R1 (forward, 10 passes): accuracy at least 16 of 20 (one render pass suffices to read the digit; this is the positive control for the tool).",
+  "P6_model_gap": "On the shared 10-network subsets, Opus beats Sonnet on E1 by at least 3 networks within-3x-of-oracle, and the two do not differ on R1 noforward accuracy by more than 2 networks."
+ },
+ "decision_rule": "GO (second stage: CIFAR colour SIRENs, depth sweep, NFN/NFT reproduction, write-up) if P1 holds or P5's noforward part fails upward. NO-GO (write a short negative-result note, stop) if P1 fails and reading stays at chance. Either way, P3's gap to Adam is reported as measured.",
+ "budget": {
+  "estimate": "about 320 Sonnet sessions and 80 Opus sessions; Sonnet first, Opus only after Sonnet cells finish",
+  "cap_usd": 1000,
+  "accounting": "scripts/usage.py sums per-turn token usage from turns/*/run.json; prices in studies/01-sandbox/prices.json",
+  "stop": "pause and report if the running estimate passes 700 USD before the Sonnet cells are complete"
+ },
+ "order": ["E5_control", "E1_blur_shallow", "R0_null", "R1_read", "E4_level1", "E2_blur_deep", "E3_morphology", "opus subsets"]
+}

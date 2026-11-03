@@ -82,25 +82,35 @@ def sandbox_task_prompt(eff: dict, task_text: str, protocol: str, passes: int, m
 
 # ----------------------------------------------------------------------------- backends
 class AnthropicBackend:
+    """Anthropic Messages API, multi-turn. Adaptive thinking with an explicit effort level (the only
+    thinking control on Claude 5.5-generation models), streaming, and automatic prompt caching of the
+    conversation prefix (the weights and the task text are re-sent every turn)."""
+
     def __init__(self, model: str, effort: str = "high", max_tokens: int = 32000):
         import anthropic  # type: ignore
         self.client = anthropic.Anthropic()
-        self.model, self.max_tokens = model, max_tokens
-        self.budget = {"low": 2048, "medium": 8192, "high": 24000, "max": 48000}.get(effort, 24000)
+        self.model, self.effort, self.max_tokens = model, effort, max_tokens
         self.messages = []
 
     def send(self, text: str):
         self.messages.append({"role": "user", "content": text})
         t0 = time.time()
         with self.client.messages.stream(model=self.model, max_tokens=self.max_tokens, system=NEUTRAL_SYSTEM,
-                                         thinking={"type": "enabled", "budget_tokens": min(self.budget, self.max_tokens - 2048)},
+                                         thinking={"type": "adaptive", "display": "summarized"},
+                                         output_config={"effort": self.effort},
+                                         cache_control={"type": "ephemeral"},
                                          messages=self.messages) as s:
             msg = s.get_final_message()
         reply = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        # keep the assistant turn (thinking blocks included, as the API requires when thinking is on)
+        thinking = "\n\n".join(getattr(b, "thinking", "") or "" for b in msg.content if getattr(b, "type", "") == "thinking")
+        # keep the assistant turn with its thinking blocks unchanged (preserved thinking)
         self.messages.append({"role": "assistant", "content": [b.model_dump() for b in msg.content]})
         usage = msg.usage.model_dump() if hasattr(msg.usage, "model_dump") else dict(msg.usage)
-        return reply, {"usage": usage, "seconds": time.time() - t0, "stop_reason": msg.stop_reason}
+        rec = {"usage": usage, "seconds": time.time() - t0, "stop_reason": msg.stop_reason,
+               "thinking_summary": thinking[:20000]}
+        if msg.stop_reason == "refusal" and getattr(msg, "stop_details", None):
+            rec["stop_details"] = msg.stop_details.model_dump()
+        return reply, rec
 
 
 class OpenAIBackend:

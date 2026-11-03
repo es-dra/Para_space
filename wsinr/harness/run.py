@@ -40,16 +40,17 @@ def run_claude_cli(prompt: str, model: str, effort: str, max_tokens: int):
 def run_anthropic(prompt: str, model: str, effort: str, max_tokens: int):
     import anthropic  # type: ignore
     client = anthropic.Anthropic()
-    budget = {"low": 2048, "medium": 8192, "high": 32000, "max": 64000}.get(effort, 32000)
     t0 = time.time()
     with client.messages.stream(model=model, max_tokens=max_tokens, system=NEUTRAL_SYSTEM,
-                                thinking={"type": "enabled", "budget_tokens": min(budget, max_tokens - 1024)},
+                                thinking={"type": "adaptive", "display": "summarized"},
+                                output_config={"effort": effort},
                                 messages=[{"role": "user", "content": prompt}]) as s:
         msg = s.get_final_message()
     dt = time.time() - t0
     text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+    thinking = "\n\n".join(getattr(b, "thinking", "") or "" for b in msg.content if getattr(b, "type", "") == "thinking")
     return text, {"usage": msg.usage.model_dump() if hasattr(msg.usage, "model_dump") else dict(msg.usage),
-                  "seconds": dt, "tool_free": True, "stop_reason": msg.stop_reason}
+                  "seconds": dt, "tool_free": True, "stop_reason": msg.stop_reason, "thinking_summary": thinking[:20000]}
 
 
 def run_openai(prompt: str, model: str, effort: str, max_tokens: int):
