@@ -1,0 +1,21 @@
+{
+ "version": "claude-20261103-wsinr-editable-v2",
+ "status": "frozen before running; the confirmatory version of the exploratory stage-04 runs",
+ "question": "Does bounding every hidden unit's harmonic index during training give a monotone, dataset-independent trade-off between fit quality and dictionary programmability, and does the projection dominate the L1 penalty at equal harmonic index?",
+ "design": {
+  "architecture": "2-32-32-1, omega 30",
+  "bounds": [1, 2, 4, 8],
+  "datasets": ["MNIST test 0..19", "Fashion-MNIST test 0..19"],
+  "seeds": [0, 1],
+  "recipe": "2,000 Adam steps at 1e-3, projection after every step; L1 penalty 1e-3 and 1e-2 on MNIST seed 0 from stage 02 as the comparison",
+  "metrics": "fit PSNR (median, image bootstrap CI); blur_1 input-attenuation program error / no-edit error on the function-space target; network harmonic index"
+ },
+ "predictions_frozen_before_running": {
+  "E1_monotone": "Within every (dataset, seed), the median blur ratio increases with the bound and the median PSNR increases with the bound (4 of 4 series monotone in both).",
+  "E2_dataset_independent": "At each bound the MNIST and Fashion-MNIST median blur ratios differ by less than a factor of 2.",
+  "E3_projection_dominates_penalty": "At matched H (bound 2 vs penalty 1e-2, H about 2 and 1.6), the projection has a higher PSNR and a lower blur ratio on MNIST seed 0 (already seen once; this run adds seed 1).",
+  "E4_operating_point": "Bound 4 reaches at least 36 dB median PSNR on both datasets with a blur ratio of at most 0.4.",
+  "E5_bound_8": "Bound 8 is above 0.6 in blur ratio on both datasets (approaching the standard-training failure) while exceeding 48 dB."
+ },
+ "decision_rule": "If E1-E4 hold, the swing bound becomes the recommended 'editable INR' training knob in the write-up, with the curve as a figure. If E2 fails, the trade-off is dataset-specific and is reported per dataset. If E3 fails on seed 1, the projection-vs-penalty claim is dropped."
+}
