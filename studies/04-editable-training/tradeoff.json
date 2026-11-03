@@ -1,0 +1,104 @@
+{
+ "L3w8": {
+  "series": "standard, depth 3",
+  "psnr": 18.92420353624177,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L3w16": {
+  "series": "standard, depth 3",
+  "psnr": 29.031886149395888,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L3w32": {
+  "series": "standard, depth 3",
+  "psnr": 61.52236087655433,
+  "blur_ratio": 1.6277774951670012,
+  "H": 14.13261158701031
+ },
+ "L4w16": {
+  "series": "standard, depth 4",
+  "psnr": 48.126088546861396,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L4w32": {
+  "series": "standard, depth 4",
+  "psnr": 73.98747032700379,
+  "blur_ratio": 0.8631728607971193,
+  "H": 8.922800811766926
+ },
+ "L2w32": {
+  "series": "shallow (exact)",
+  "psnr": 20.23763315213884,
+  "blur_ratio": 6.114301402999527e-08,
+  "H": 0.0
+ },
+ "L2w64": {
+  "series": "shallow (exact)",
+  "psnr": 23.64508065377254,
+  "blur_ratio": 4.4194878897127654e-08,
+  "H": 0.0
+ },
+ "L2w128": {
+  "series": "shallow (exact)",
+  "psnr": 25.480504181384738,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L2w256": {
+  "series": "shallow (exact)",
+  "psnr": 26.24434016518235,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L2w384": {
+  "series": "shallow (exact)",
+  "psnr": 26.906014587923494,
+  "blur_ratio": 3.686523967433464e-08,
+  "H": 0.0
+ },
+ "L2w1024": {
+  "series": "shallow (exact)",
+  "psnr": 27.491399703445474,
+  "blur_ratio": null,
+  "H": null
+ },
+ "L3w32_swing0.5": {
+  "series": "depth 3, swing bound",
+  "psnr": 20.286312080360993,
+  "blur_ratio": 5.226144591090422e-05,
+  "H": 0.4999999999614878
+ },
+ "L3w32_swing1": {
+  "series": "depth 3, swing bound",
+  "psnr": 22.09784637931603,
+  "blur_ratio": 0.02498795320562372,
+  "H": 0.999999999911187
+ },
+ "L3w32_swing2": {
+  "series": "depth 3, swing bound",
+  "psnr": 28.785337559452792,
+  "blur_ratio": 0.14978633900353822,
+  "H": 2.000000001179703
+ },
+ "L3w32_swing4": {
+  "series": "depth 3, swing bound",
+  "psnr": 39.65309758850708,
+  "blur_ratio": 0.27957955522402106,
+  "H": 4.000000002552286
+ },
+ "L3w32_lam1e-2": {
+  "series": "depth 3, L1 penalty",
+  "psnr": 27.709981155545734,
+  "blur_ratio": 0.40066816177723097,
+  "H": 1.622549166540693
+ },
+ "L3w32_lam1e-3": {
+  "series": "depth 3, L1 penalty",
+  "psnr": 34.277272369109866,
+  "blur_ratio": 0.618595463764686,
+  "H": 3.125032971558391
+ }
+}

@@ -4,3 +4,4 @@ torch>=2.0
 # optional, for the LLM harness
 # anthropic
 # openai
+matplotlib
