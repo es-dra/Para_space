@@ -12,6 +12,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+COLORS = {"standard, depth 3": "C0", "standard, depth 4": "C1", "shallow (exact)": "C2",
+          "depth 3, swing bound": "C3", "depth 3, L1 penalty": "C4"}
 SERIES = {
     "standard, depth 3": [("L3w8", "mnist_d3_s8"), ("L3w16", "mnist_d3_s16"), ("L3w32", "mnist_s32")],
     "standard, depth 4": [("L4w16", "mnist_d4_s16"), ("L4w32", "mnist_d4_s32")],
@@ -55,14 +57,14 @@ def main():
         if not pts:
             continue
         pts.sort()
-        axes[0].plot([p[0] for p in pts], [p[1] for p in pts], "o-", label=name)
+        axes[0].plot([p[0] for p in pts], [p[1] for p in pts], "o-", label=name, color=COLORS[name])
         for p in pts:
             axes[0].annotate(p[3].replace("L3w32_", "").replace("mnist_", ""), (p[0], p[1]), fontsize=6, xytext=(3, 3), textcoords="offset points")
         if name != "shallow (exact)":
-            axes[1].plot([p[2] for p in pts], [p[1] for p in pts], "o", label=name)
+            axes[1].plot([p[2] for p in pts], [p[1] for p in pts], "o", label=name, color=COLORS[name])
     axes[0].set_yscale("log")
     axes[0].set_xlabel("fit PSNR (dB, median of 20 networks)")
-    axes[0].set_ylabel("blur program error / no-edit error (function-space, median)")
+    axes[0].set_ylabel("blur program error / no-edit error (function-space, median; floor 1e-4)")
     axes[0].axhline(1.0, color="k", lw=0.5, ls="--")
     axes[0].set_title("Programmability against fit quality")
     axes[0].legend(fontsize=7)
