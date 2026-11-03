@@ -1,10 +1,10 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-zoo/
-results/
-prompts/
+/zoo/
+/results/
+/prompts/
 *.log
 .DS_Store
 memory/
-runs/
+/runs/
