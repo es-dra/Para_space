@@ -64,3 +64,9 @@ lives elsewhere: conditional INRs whose encoder does the compression and whose d
 with a linear readout. That is the footprint decoder of the arbitrary-scale SR study, which matched LTE within
 0.10 dB at symmetric scales; it is also the architecture on which anti-aliased resampling is a weight edit. This
 stage does not test that; it is the prediction for the stage after the ICME submission.
+
+## Replication on Fashion-MNIST (added the same day)
+
+Same recipe, Fashion-MNIST test images 0..19 (`results/fashion_replication.json`): 2-384-1 (1,537 weights)
+24.4 dB [23.7, 28.7]; 2-16-16-1 (337 weights) 26.8 dB [25.9, 29.4]; 2-32-32-1 (1,185 weights) 66.3 dB
+[59.4, 72.4]. The matched-parameter gap is 42 dB and the small deep network again beats the large shallow one.
