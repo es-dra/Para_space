@@ -63,3 +63,20 @@ def rms_highpass(eff: dict, sigma_pix: float, side: int = 28) -> dict:
     out[f"A{L}"] = eff[f"A{L}"] * g[:, None]
     out[f"c{L}"] = np.zeros_like(eff[f"c{L}"])
     return out
+
+
+def input_attenuation_blur(eff: dict, sigma_pix: float, side: int = 28) -> dict:
+    """Blur by attenuating the plane-wave inputs of the first hidden sine layer:
+    A2[i, :] *= exp(-|w_i|^2 sigma^2 / 2).
+
+    Derivation: z_j = c_j + sum_i a_ij sin(theta_i) with theta_i = w_i . p + c_i. To first order in the
+    swing of z_j about c_j, sin(z_j) = sin(c_j) + cos(c_j) sum_i a_ij sin(theta_i), a linear combination of
+    plane waves, and the Gaussian blur of a plane wave of frequency w_i is the same wave times
+    g_i = exp(-|w_i|^2 sigma^2 / 2). Replacing a_ij by a_ij g_i therefore blurs the network exactly in the
+    linear regime; the error is the part of sin(z_j) carried by harmonics (controlled by the harmonic index
+    sum_i |a_ij|). For L = 2 this is the exact shallow program on A2 (the readout)."""
+    out = _copy(eff)
+    sigma = sigma_pix * 2.0 / (side - 1)
+    g = np.exp(-0.5 * np.sum(eff["A1"] ** 2, axis=0) * sigma ** 2)
+    out["A2"] = eff["A2"] * g[:, None]
+    return out

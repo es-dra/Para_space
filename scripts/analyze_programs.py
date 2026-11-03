@@ -36,8 +36,9 @@ def main():
                 row[k] = {"median": float(np.median(v)), "ci": boot_ci(v), "ratio_to_no_edit_median": float(np.median(v / np.maximum(ne, 1e-12))),
                           "n_below_half_no_edit": int(np.sum(v < 0.5 * ne)), "max": float(v.max())}
             row["finetune"] = {k: float(np.median(v)) for k, v in rec["finetune"].items()}
-            if "rms_attenuation" in rec:
-                row["rms_above_lastlayer"] = int(np.sum(np.array(rec["rms_attenuation"]) > np.array(rec["lastlayer"])))
+            for prog in ("rms_attenuation", "input_attenuation"):
+                if prog in rec:
+                    row[f"{prog}_above_lastlayer"] = int(np.sum(np.array(rec[prog]) > np.array(rec["lastlayer"])))
             z[task] = row
         O["per_zoo"][tag] = z
 
@@ -51,7 +52,9 @@ def main():
     q2 = {}
     for tag in [t for t in R if R[t]["L"] >= 3]:
         b = O["per_zoo"][tag]["blur_1"]
-        q2[tag] = {"rms_above_lastlayer": b["rms_above_lastlayer"], "ratio": b["rms_attenuation"]["ratio_to_no_edit_median"]}
+        q2[tag] = {"rms_above_lastlayer": b["rms_attenuation_above_lastlayer"], "ratio": b["rms_attenuation"]["ratio_to_no_edit_median"],
+                   "input_above_lastlayer": b.get("input_attenuation_above_lastlayer"),
+                   "input_ratio": b.get("input_attenuation", {}).get("ratio_to_no_edit_median")}
     P["Q2_depth_degrades"] = {"detail": q2, "pass": all(v["rms_above_lastlayer"] >= 18 and 0.3 <= v["ratio"] <= 0.9 for v in q2.values()) if q2 else None}
     # Q3: correlation of per-network ratio with harmonic index across deep nets
     xs, ys = [], []
@@ -62,6 +65,14 @@ def main():
     if xs:
         rho, pval = stats.spearmanr(xs, ys)
         P["Q3_failure_is_predicted_by_harmonics"] = {"spearman_rho": float(rho), "p": float(pval), "n": len(xs), "pass": bool(rho > 0.4)}
+        ys2 = []
+        for tag in [t for t in R if R[t]["L"] >= 3]:
+            rec = R[tag]["tasks"]["blur_1"]
+            if "input_attenuation" in rec:
+                ys2 += list(np.array(rec["input_attenuation"]) / np.maximum(np.array(rec["no_edit"]), 1e-12))
+        if len(ys2) == len(xs):
+            rho2, p2 = stats.spearmanr(xs, ys2)
+            P["Q3_failure_is_predicted_by_harmonics"]["input_attenuation"] = {"spearman_rho": float(rho2), "p": float(p2)}
     # Q4: readout-only bound for morphology vs blur on L3w32
     if "L3w32" in R:
         z = O["per_zoo"]["L3w32"]

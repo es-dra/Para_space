@@ -57,7 +57,8 @@ def main():
 
     for s in a.sigmas:
         targets = np.stack([ndimage.gaussian_filter(b, s) for b in bases])
-        progs = {"rms_attenuation": [programs.rms_attenuation_blur(e, s, side) for e in effs]}
+        progs = {"rms_attenuation": [programs.rms_attenuation_blur(e, s, side) for e in effs],
+                 "input_attenuation": [programs.input_attenuation_blur(e, s, side) for e in effs]}
         if L == 2:
             progs["exact"] = [oracle.lowpass_gauss(e, s, side) for e in effs]
         row(f"blur_{s:g}", targets, progs)
