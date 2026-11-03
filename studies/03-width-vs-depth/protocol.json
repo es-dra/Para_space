@@ -1,0 +1,24 @@
+{
+ "version": "claude-20261103-wsinr-width-depth-v1",
+ "status": "frozen after the first two wide zoos (2-384-1: 27.4 dB; 2-1024-1 pending) and the least-squares ceiling check, before the parameter sweep",
+ "question": "What does dictionary-level programmability cost in representation quality? A SIREN with one sine layer and a linear readout is exactly programmable for Gaussian blur (stage 02); a deep SIREN is not. At matched parameter counts, how far behind is the shallow family, and is the gap a capacity limit of the dictionary or an optimisation limit?",
+ "already_known_when_frozen": {
+  "shallow ceilings": "With the first layer fixed, the least-squares readout reaches 21.0 / 23.6 / 27.3 dB for W = 32 / 64 / 384 trained frequencies, equal to the trained zoo PSNR (20.9 / 23.6 / 27.3): training has converged, the dictionary is the limit. Random (untrained) frequencies give 12.6 / 14.6 / 23.3 / 24.3 dB for W = 32 / 64 / 384 / 1024.",
+  "reference": "The best k DCT coefficients of the same images give 23.6 / 29.1 / 34.2 / 40.4 dB for k = 128 / 256 / 384 / 512: even an ideal orthogonal plane-wave dictionary needs about 500 terms for 40 dB, while 2-32-32-1 (1,185 weights) reaches 61.5 dB and 2-32-32-32-1 reaches 74.0 dB.",
+  "consequence": "Width cannot substitute for depth here; programmability of the dictionary layer has a large price for a standalone image INR."
+ },
+ "sweep": {
+  "shallow": "2-W-1 for W in {32, 64, 128, 256, 384, 1024}: 129, 257, 513, 1025, 1537, 4097 weights",
+  "deep": "2-h-h-1 for h in {8, 16, 32}: 97, 321, 1185 weights; 2-h-h-h-1 for h in {16, 32}: 593, 2241 weights",
+  "recipe": "MNIST test 0..19, 2,000 Adam steps at 1e-3, NumPy trainer; plus 5 networks of 2-384-1 at 10,000 steps as the optimisation control",
+  "metric": "fit PSNR of the clipped rendering against the MNIST image; blur_1 programmability from stage 02's exact (shallow) and input-attenuation (deep) programs on the function-space target"
+ },
+ "predictions_frozen_before_running": {
+  "W1_gap_at_matched_params": "At about 1,000-1,500 weights the deep family exceeds the shallow family by more than 25 dB median PSNR (2-32-32-1 vs 2-256-1 and 2-384-1).",
+  "W2_shallow_saturates": "Shallow PSNR grows by less than 4 dB per doubling of W beyond 256, and 2-1024-1 stays below 32 dB.",
+  "W3_optimisation_is_not_the_limit": "2-384-1 trained for 10,000 steps improves by less than 1 dB over 2,000 steps.",
+  "W4_deep_small_beats_shallow_large": "2-16-16-1 (321 weights) exceeds 2-1024-1 (4,097 weights) in median PSNR.",
+  "W5_programmability_unchanged": "Every shallow network in the sweep keeps the exact blur program below 1e-6 MSE against the function-space target; no deep network in the sweep gets the input-attenuation program below 0.7 x no-edit."
+ },
+ "interpretation": "If W1-W5 hold: for standalone image INRs, exact dictionary-level programmability costs tens of dB at equal parameter count, because compression comes from composition (harmonics), which is exactly what breaks programmability. The place where programmability is cheap is a conditional INR whose capacity lives in an encoder (the arbitrary-scale SR decoders of the footprint study: a local Fourier field with linear readout matched LTE within 0.10 dB at symmetric scales) -- a prediction for the stage that follows the ICME submission, not a result of this stage."
+}
