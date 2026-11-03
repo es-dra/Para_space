@@ -19,6 +19,24 @@ from wsinr.tasks import TASKS
 from wsinr.zoo_np import fit as np_fit
 
 
+def fine_blur_targets(effs, sigma_pix, side=28, up=8):
+    """Blur of the continuous function: render at `up` x resolution with padding, blur with sigma = up fine
+    samples, sample back on the 28-grid. Avoids the discretisation and clipping of a pixel-space target."""
+    t = np.linspace(-1, 1, side)
+    step = t[1] - t[0]
+    pad = 6 * step * max(sigma_pix, 1)
+    tf = np.arange(-1 - pad, 1 + pad + 1e-9, step / up)
+    yy, xx = np.meshgrid(tf, tf, indexing="ij")
+    coords = np.stack([yy.ravel(), xx.ravel()], 1)
+    idx = np.round((t - tf[0]) / (step / up)).astype(int)
+    out = []
+    for e in effs:
+        F = siren.forward_effective(e, coords).reshape(len(tf), len(tf))
+        Fb = ndimage.gaussian_filter(F, sigma_pix * up, mode="nearest")
+        out.append(Fb[np.ix_(idx, idx)])
+    return np.stack(out)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--zoo", required=True)
@@ -33,16 +51,18 @@ def main():
     effs = [siren.to_effective(p) for p in nets]
     side = 28
     bases = np.stack([render(p, side)[..., 0] for p in nets])
+    bases_raw = np.stack([render(p, side, clip=False)[..., 0] for p in nets])
     L = siren.num_matrices(nets[0])
     out = {"zoo": a.zoo, "tag": a.tag, "L": L, "n": len(nets), "files": [os.path.basename(f) for f in files],
            "harmonic_index": [programs.network_harmonic_index(e) for e in effs],
            "harmonic_index_units_mean": [float(programs.harmonic_index(e).mean()) for e in effs],
            "tasks": {}}
 
-    def row(name, targets, edited_effs: dict, masks=None):
-        rec = {"no_edit": [mse(bases[i], targets[i], None if masks is None else masks[i]) for i in range(len(nets))]}
+    def row(name, targets, edited_effs: dict, masks=None, clip=True):
+        B = bases if clip else bases_raw
+        rec = {"no_edit": [mse(B[i], targets[i], None if masks is None else masks[i]) for i in range(len(nets))]}
         for prog, es in edited_effs.items():
-            rec[prog] = [mse(render(siren.from_effective(es[i]), side)[..., 0], targets[i], None if masks is None else masks[i])
+            rec[prog] = [mse(render(siren.from_effective(es[i]), side, clip=clip)[..., 0], targets[i], None if masks is None else masks[i])
                          for i in range(len(nets))]
         rec["lastlayer"] = [mse(render(siren.from_effective(lastlayer_lstsq(effs[i], targets[i], None if masks is None else masks[i])), side)[..., 0],
                                 targets[i], None if masks is None else masks[i]) for i in range(len(nets))]
@@ -62,6 +82,7 @@ def main():
         if L == 2:
             progs["exact"] = [oracle.lowpass_gauss(e, s, side) for e in effs]
         row(f"blur_{s:g}", targets, progs)
+        row(f"blur_{s:g}_fn", fine_blur_targets(effs, s, side), progs, clip=False)
     for tname in ("dilate", "erode", "threshold"):
         t = TASKS[tname]
         row(tname, np.stack([t.target(b) for b in bases]), {})
