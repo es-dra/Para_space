@@ -1,0 +1,53 @@
+{
+ "config": {
+  "mnist": "/tmp/claude-0/-home-user/6428c47a-5e7d-5d42-b0e8-31eaa92ea584/scratchpad/data/mnist",
+  "split": "test",
+  "n": 5,
+  "offset": 0,
+  "steps": 10000,
+  "lr": 0.001,
+  "hidden": 384,
+  "hidden_layers": 0,
+  "seed": 0,
+  "device": "cpu",
+  "backend": "np",
+  "harmonic_penalty": 0.0,
+  "out": "zoo/mnist_shallow384_long"
+ },
+ "n_params": 1537,
+ "seconds": 872.720999956131,
+ "mean_fit_mse": 0.0011982904597307028,
+ "mean_psnr": 30.16508124006226,
+ "rows": [
+  {
+   "name": "test_00000",
+   "label": 7,
+   "fit_mse": 0.0007052966762551205,
+   "psnr": 31.51628162784438
+  },
+  {
+   "name": "test_00001",
+   "label": 2,
+   "fit_mse": 0.0017055388096228774,
+   "psnr": 27.681383937509885
+  },
+  {
+   "name": "test_00002",
+   "label": 1,
+   "fit_mse": 0.00037506629834803065,
+   "psnr": 34.258919577075595
+  },
+  {
+   "name": "test_00003",
+   "label": 0,
+   "fit_mse": 0.0024607243422460233,
+   "psnr": 26.089370345486014
+  },
+  {
+   "name": "test_00004",
+   "label": 4,
+   "fit_mse": 0.0007448261721814624,
+   "psnr": 31.279450712395416
+  }
+ ]
+}
