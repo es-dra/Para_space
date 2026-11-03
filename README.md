@@ -1,10 +1,29 @@
-# Para_space: weight-space programming for INRs
+# Para_space: weight-space programs for implicit neural representations
 
-Can a language model read and edit the weights of an implicit neural representation (INR)?
+Which image operations can be written directly into the weights of an implicit neural representation (INR),
+without training, and what does that programmability cost?
 
-[Sparks of Weight-Space Programming](https://rikiyat.github.io/blog/weight-space-programming/) (Takehi, Teoh, Zhang, Khattab, 2026) shows a frontier LLM naming the game a policy network plays from its raw weights, repairing a stalled policy with a one-shot weight edit, and removing a repetition loop from Qwen3.5-0.8B by projecting a direction out of 131,072 weights. Those networks read spatially indexed inputs (grid cells, physics state) whose weights carry meaning one can see. An INR has none of that: a SIREN maps two coordinates to a grey value through sinusoids, its weight space is highly symmetric (unit permutations, sign flips), and learned weight-space networks still read it poorly. INRs are therefore a sharp test of whether weight-space programming is more than reading spatial layouts.
+A SIREN `f(p) = A_L sin(... sin(A1 p + c1) ...) + c_L` separates into a coordinate layer, a dictionary of
+sinusoidal units and a linear readout. Affine coordinate maps act on layer 1 exactly; affine value maps act on
+the readout exactly; and for a one-sine-layer network the dictionary is a set of plane waves, so **any linear
+shift-invariant filter** (Gaussian, box footprint, motion, derivative, Laplacian, unsharp, band-pass) is an
+exact per-unit edit `A2_i *= |G(w_i)|, c1_i += arg G(w_i)`. Depth destroys this: after standard training the
+units of a deep SIREN swing 9-18 radians through the sine and are broadband, no per-unit scalar blurs them,
+and a weight-only harmonic index predicts which units fail. The price of keeping the dictionary programmable is
+large for a standalone image INR (about 35-40 dB at matched parameters on MNIST and Fashion-MNIST) because the
+compression that depth buys comes from the same harmonics; it should be small where the capacity lives in an
+encoder, as in arbitrary-scale super-resolution decoders.
 
-This repository is the study code: a SIREN zoo, a graded set of edit tasks with closed-form oracles where they exist, a tool-free one-reply LLM harness after the Sparks protocol, scoring, and gradient baselines.
+The study started from the question whether a frontier LLM can read and edit INR weights ("weight-space
+programming", Takehi et al. 2026). That measurement is kept as an optional later stage (`studies/01-sandbox`,
+harness in `wsinr/harness/`); the research line is the programs themselves.
+
+| Stage | Question | Status |
+| --- | --- | --- |
+| `studies/00-pilot` | tool-free LLM probes: algebra yes, reading no | done |
+| `studies/01-sandbox` | sandbox-protocol LLM measurement | frozen, deferred |
+| `studies/02-programs` | programs by layer and depth; harmonic failure mechanism; readout ceilings | done |
+| `studies/03-width-vs-depth` | the price of programmability; LSI completeness | done |
 
 ## Tasks
 
