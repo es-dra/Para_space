@@ -1,0 +1,22 @@
+{
+ "version": "claude-20261103-assr-weight-repair-v1",
+ "status": "frozen; to run on the SE-INR server after the ICME submission (needs the footprint stage-01 checkpoints and evaluation pipeline)",
+ "question": "The footprint study proved that under symmetric training (c_x = c_y) the per-axis cell response of token-style decoders is not identified: for any layer that reads the cell linearly, only the sum of the two cell columns is constrained by the data. The input-side repair (feeding the geometric mean of c_x and c_y to both inputs) recovered 1.33 dB on LTE at asymmetric scales. Is the corresponding WEIGHT-side repair -- replace the two cell columns by their mean -- (a) an exact no-op on the training manifold, (b) as good as the input-side repair off it, and (c) findable from the weights alone?",
+ "edit": {
+  "lte": "phase.weight (hidden/2 x 2, no bias): W[:, 0] = W[:, 1] = (W[:, 0] + W[:, 1]) / 2. The phase then equals (W0 + W1) (c_x + c_y) / 2: the arithmetic-mean cell policy, written into 2 x hidden/2 weights.",
+  "liif": "imnet.layers.0.weight columns for the last two inputs (the attached cell): same averaging.",
+  "sc-inr / sc-inr-exact": "no edit: the cell enters through the analytic sinc, which is identified by construction.",
+  "property": "At c_x = c_y the edited network computes exactly what the original computed, because W0 c + W1 c = (W0 + W1) c. The repair cannot change any symmetric-scale number; this is checked numerically, not assumed.",
+  "script": "studies/05-assr-decoder/assr_symmetrize.py <checkpoint> <out> (reports the tensors and the count of changed entries)"
+ },
+ "evaluation": "studies/footprint/01-inference run.py of the SE-INR footprint branch on the edited checkpoints, same conditions as stage 01 (symmetric 1.5-12, the 24 asymmetric pairs, downscale 0.5), three seeds, PSNR-Y with the stage-01 shave; paired per-image differences against the unedited checkpoints and against the input-side geometric-mean policy.",
+ "predictions_frozen_before_running": {
+  "A1_noop_on_manifold": "On every symmetric scale and every image, |PSNR(edited) - PSNR(original)| < 1e-4 dB for LTE and LIIF (floating-point only).",
+  "A2_lte_gain": "On the asymmetric pairs, LTE edited minus original balanced PSNR-Y is at least +1.0 dB with the paired 95% interval above +0.7 dB, on each of the three seeds.",
+  "A3_arithmetic_vs_geometric": "The weight-side (arithmetic-mean) repair is within 0.15 dB of the input-side geometric-mean repair on the asymmetric pairs; prior: slightly below it at the most asymmetric pairs (ratio 4 and 0.25), because (c_x + c_y)/2 > sqrt(c_x c_y) biases the phase towards the coarser axis.",
+  "A4_liif_small": "LIIF edited minus original is within [-0.05, +0.10] dB on the asymmetric pairs (stage 01 found LIIF insensitive to cell swapping, -0.002 dB).",
+  "A5_seed_variance": "The seed-to-seed range of LTE at asymmetric pairs drops from 0.9-3.6 dB to below 0.5 dB after the edit (the unidentified direction is what varied with the seed)."
+ },
+ "optional_llm_node": "Give a frontier model the LTE decoder weights, the architecture, the training recipe (symmetric cells only) and the symptom (seed swings at asymmetric scales) under the sandbox protocol, and ask for a minimal repair. Scored by whether the submitted edit is the column average (or any edit that passes A1 and A2). Budget and model to be decided when the stage runs.",
+ "what_the_user_runs": "On the server: python studies/05-assr-decoder/assr_symmetrize.py <epoch-last.pth> <edited.pth> for each LTE and LIIF seed; then the stage-01 freeze -> run -> score pipeline with --checkpoints pointing at the edited files; return score/summary.json and the per-image CSVs."
+}
