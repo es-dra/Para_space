@@ -28,6 +28,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--backend", choices=["torch", "np"], default="torch")
+    ap.add_argument("--harmonic-penalty", type=float, default=0.0, help="NumPy backend only")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     if a.backend == "torch":
@@ -35,7 +36,7 @@ def main():
         extra = {"device": a.device}
     else:
         from wsinr.zoo_np import fit
-        extra = {}
+        extra = {"harmonic_penalty": a.harmonic_penalty}
 
     x, y = load_mnist(a.mnist, a.split)
     idx = np.arange(a.offset, a.offset + a.n)
@@ -51,7 +52,8 @@ def main():
         fit_mse = float(np.mean((img - imgs[i]) ** 2))
         name = f"{a.split}_{idx[i]:05d}"
         siren.save_npz(os.path.join(a.out, name + ".npz"), p, label=int(labels[i]), index=int(idx[i]),
-                       split=a.split, fit_mse=fit_mse, steps=a.steps, lr=a.lr, seed=a.seed)
+                       split=a.split, fit_mse=fit_mse, steps=a.steps, lr=a.lr, seed=a.seed,
+                       harmonic_penalty=a.harmonic_penalty)
         rows.append({"name": name, "label": int(labels[i]), "fit_mse": fit_mse,
                      "psnr": float(10 * np.log10(1 / max(fit_mse, 1e-12)))})
     meta = {"config": vars(a), "n_params": siren.count_params(params[0]), "seconds": dt,

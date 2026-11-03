@@ -32,8 +32,12 @@ def _forward(P, X, omega):
 
 
 def fit(images: np.ndarray, steps=2000, lr=1e-3, hidden=32, hidden_layers=1, omega=siren.OMEGA, seed=0,
-        init: list | None = None, log_every=0, masks: np.ndarray | None = None):
-    """images: (B, H, W). Returns (list of float32 param dicts, per-network final MSE)."""
+        init: list | None = None, log_every=0, masks: np.ndarray | None = None, harmonic_penalty=0.0):
+    """images: (B, H, W). Returns (list of float32 param dicts, per-network final MSE).
+
+    harmonic_penalty: lambda (scalar or per-network array) on the mean harmonic index of the hidden sine
+    layers, lambda * mean_j sum_i |omega W_k[i, j]| for k = 2..L-1. It keeps hidden units near the linear
+    regime of the sine, where layer-local weight-space programs stay exact ("editable" training)."""
     B, H, W = images.shape
     N = H * W
     X = np.broadcast_to(grid(H), (B, N, 2)).astype(np.float64)
@@ -67,6 +71,11 @@ def fit(images: np.ndarray, steps=2000, lr=1e-3, hidden=32, hidden_layers=1, ome
             grads[f"b{k}"] = g.sum(axis=1)
             if k > 1:
                 g = (g @ P[f"W{k}"].transpose(0, 2, 1)) * np.cos(zs[k - 2]) * omega
+        if np.any(np.asarray(harmonic_penalty) > 0):
+            lam = np.broadcast_to(np.asarray(harmonic_penalty, float), (B,))[:, None, None]
+            for k in range(2, L):
+                nunits = P[f"W{k}"].shape[2]
+                grads[f"W{k}"] = grads[f"W{k}"] + lam * omega * np.sign(P[f"W{k}"]) / nunits
         for k in P:
             m[k] = b1 * m[k] + (1 - b1) * grads[k]
             v[k] = b2 * v[k] + (1 - b2) * grads[k] ** 2
