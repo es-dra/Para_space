@@ -3,8 +3,7 @@ __pycache__/
 .pytest_cache/
 zoo/
 results/
-prompts/*/*/answer.md
-prompts/*/*/run.json
+prompts/
 *.log
 .DS_Store
 memory/
