@@ -80,3 +80,77 @@ def input_attenuation_blur(eff: dict, sigma_pix: float, side: int = 28) -> dict:
     g = np.exp(-0.5 * np.sum(eff["A1"] ** 2, axis=0) * sigma ** 2)
     out["A2"] = eff["A2"] * g[:, None]
     return out
+
+
+# ----------------------------------------------------------------------------- LSI filters on shallow SIRENs
+def lsi_filter(eff: dict, transfer) -> dict:
+    """Any linear shift-invariant filter on a one-sine-layer SIREN, exactly.
+
+    Each hidden unit is a single plane wave sin(w_i . p + c_i). A real LSI filter with (complex) frequency
+    response G(w) maps it to |G(w_i)| sin(w_i . p + c_i + arg G(w_i)). So the program is
+        A2_i *= |G(w_i)|,   c1_i += arg G(w_i),   c2 *= G(0) (the DC gain).
+    `transfer(W)` takes an array of frequency vectors (H, 2) in the (y, x) order of A1's rows and returns
+    complex gains (H,). Requires L = 2; returns None otherwise. Coordinates are in the [-1, 1] units of the
+    network; convert pixel sizes with 2 / (side - 1)."""
+    if _last(eff) != 2:
+        return None
+    out = _copy(eff)
+    W = eff["A1"].T                                          # (H, 2): rows are (w_y, w_x)
+    G = np.asarray(transfer(W), dtype=complex)
+    out["A2"] = eff["A2"] * np.abs(G)[:, None]
+    out["c1"] = eff["c1"] + np.angle(G)
+    G0 = complex(np.asarray(transfer(np.zeros((1, 2))))[0])
+    out["c2"] = eff["c2"] * G0.real
+    return out
+
+
+def _pix(side):
+    return 2.0 / (side - 1)
+
+
+def gaussian_transfer(sigma_pix, side=28, aniso=None):
+    """Isotropic Gaussian (or anisotropic with aniso = (sigma_y, sigma_x) in pixels)."""
+    if aniso is None:
+        s = sigma_pix * _pix(side)
+        return lambda W: np.exp(-0.5 * (W ** 2).sum(1) * s ** 2)
+    sy, sx = aniso[0] * _pix(side), aniso[1] * _pix(side)
+    return lambda W: np.exp(-0.5 * ((W[:, 0] * sy) ** 2 + (W[:, 1] * sx) ** 2))
+
+
+def box_transfer(cy_pix, cx_pix, side=28):
+    """Mean over a rectangular footprint of cy x cx pixels (the pixel-footprint integral of arbitrary-scale
+    SR decoders): G(w) = sinc(w_y cy / 2) sinc(w_x cx / 2) with sinc(t) = sin(t)/t."""
+    cy, cx = cy_pix * _pix(side), cx_pix * _pix(side)
+    return lambda W: np.sinc(W[:, 0] * cy / (2 * np.pi)) * np.sinc(W[:, 1] * cx / (2 * np.pi))
+
+
+def motion_transfer(length_pix, direction=(0.0, 1.0), side=28):
+    """Uniform motion blur of `length_pix` along `direction` (y, x): G(w) = sinc(w . d L / 2)."""
+    d = np.asarray(direction, float)
+    d = d / np.linalg.norm(d) * length_pix * _pix(side)
+    return lambda W: np.sinc((W @ d) / (2 * np.pi))
+
+
+def derivative_transfer(direction=(0.0, 1.0), side=28):
+    """Directional derivative in units of grey level per pixel: G(w) = i (w . d) * pixel."""
+    d = np.asarray(direction, float)
+    d = d / np.linalg.norm(d) * _pix(side)
+    return lambda W: 1j * (W @ d)
+
+
+def laplacian_transfer(side=28):
+    """Laplacian in grey level per pixel^2: G(w) = -|w|^2 pixel^2."""
+    s = _pix(side)
+    return lambda W: -(W ** 2).sum(1) * s ** 2
+
+
+def unsharp_transfer(sigma_pix, amount, side=28):
+    """f + amount (f - gaussian_sigma * f)."""
+    g = gaussian_transfer(sigma_pix, side)
+    return lambda W: 1.0 + amount * (1.0 - g(W))
+
+
+def dog_transfer(sigma1_pix, sigma2_pix, side=28):
+    """Difference of Gaussians (band-pass)."""
+    g1, g2 = gaussian_transfer(sigma1_pix, side), gaussian_transfer(sigma2_pix, side)
+    return lambda W: g1(W) - g2(W)
