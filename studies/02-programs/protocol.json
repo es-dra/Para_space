@@ -1,0 +1,34 @@
+{
+ "version": "claude-20261103-wsinr-programs-v1",
+ "status": "frozen before the depth experiments; the main line of the study",
+ "question": "Which image operations are programmable in the weight space of a SIREN without training, by which layer, with what error, and how does programmability degrade with depth? Where it fails, what weight-only quantity predicts the failure?",
+ "framing": "A SIREN f(p) = A_L sin(... sin(A1 p + c1) ...) + c_L separates into a coordinate layer (A1, c1), a dictionary (the hidden sine layers) and a linear readout (A_L, c_L). Coordinate-domain operations act on layer 1 exactly; pointwise value maps act on the readout exactly; spectrum-changing operations (filtering, morphology) must re-weight the dictionary. For one sine layer the dictionary is a set of plane waves and an isotropic Gaussian blur is exactly a per-unit attenuation of the readout, A2_i *= exp(-|w_i|^2 sigma^2 / 2). Each further sine layer turns plane waves into harmonic mixtures (frequencies sum_i n_i w_i), and no per-unit attenuation is exact.",
+ "zoos": {
+  "L2w64": "zoo/mnist_shallow64 (2-64-1, 257 weights)",
+  "L2w32": "zoo/mnist_shallow32 (2-32-1, 129 weights)",
+  "L3w32": "zoo/mnist_s32 (2-32-32-1, 1,185 weights)",
+  "L4w32": "zoo/mnist_d4_s32 (2-32-32-32-1, 2,241 weights)",
+  "networks": "test_00000..test_00019 of each; MNIST test images, 2,000 Adam steps"
+ },
+ "programs": {
+  "exact_shallow_blur": "A2_i *= exp(-|w_i|^2 sigma^2 / 2) (L=2 only)",
+  "rms_attenuation": "weight-only generalisation to any depth: attenuate the readout row of hidden unit j of the last sine layer by exp(-nu_j^2 sigma^2 / 2), where nu_j^2 is the mean-square spatial frequency of that unit's pre-activation gradient, computed from the weights alone (for L=3: nu_j^2 = 1/2 sum_i A2_ij^2 |w_i|^2; for deeper nets recursively with the same half-power rule). Exact when each unit carries one harmonic; a heuristic otherwise.",
+  "frozen_dictionary_bound": "least squares of the readout on the target image: the best any readout-only program can do (uses the target, so an upper bound on programmability of the readout, not a weight-only program)",
+  "finetune": "Adam 10 / 50 / 200 steps from the original network: what training does with the same or more function evaluations"
+ },
+ "weight_only_failure_predictor": "harmonic index H_j of a hidden unit of the last sine layer = the total phase swing of its pre-activation beyond the first harmonic, estimated from the weights as sum_i |A2_ij| (the amplitude of the argument of the sine; when it is below about 1 the unit is nearly a single harmonic, when it is several radians the unit is a strongly harmonic mixture). The network-level index is the readout-weighted mean of H_j.",
+ "predictions_frozen_before_running": {
+  "Q1_exactness": "On L2w64 and L2w32, exact_shallow_blur reaches MSE below 2e-4 on every network for sigma = 1 pixel (the only error is the discrete sampling of the target).",
+  "Q2_depth_degrades": "On L3w32 and L4w32, rms_attenuation stays above the frozen_dictionary_bound on at least 18 of 20 networks each, and its median MSE ratio to no_edit is between 0.3 and 0.9 (a partial blur, never a clean one).",
+  "Q3_failure_is_predicted_by_harmonics": "Across the 40 deep networks, the per-network MSE of rms_attenuation (relative to no_edit) correlates positively with the network-level harmonic index (Spearman rho > 0.4).",
+  "Q4_readout_only_cannot_do_morphology": "On L3w32, the frozen_dictionary_bound for dilate and erode is above 0.5 x no_edit MSE on at least 15 of 20 networks: these operations need hidden-layer changes, whereas for blur_1 the bound is below 0.5 x no_edit on at least 15 of 20.",
+  "Q5_learned_editors_lose_to_algebra": "contrast_2 by the readout affine map gives MSE below 1e-6 on every network of every zoo, against the published learned-editor results of about 0.02 on the NFN/NFT CIFAR contrast task (different zoo, same operation; reported as a qualitative comparison, not a controlled one, until the NFN zoo is reproduced)."
+ },
+ "controls": [
+  "every number on 20 networks per zoo with image-bootstrap 95% intervals",
+  "masks where the target is undefined",
+  "targets derived from the network's own rendering, not the MNIST image, so fitting error does not enter",
+  "the shallow zoos fit poorly (about 24 dB); conclusions about exactness concern the function the network represents, not image quality"
+ ],
+ "decision_rule": "If Q1-Q3 hold, the depth result and the failure predictor become the paper's centre, and the next node extends to high-pass / band-pass filters and to multi-sigma blur. If Q3 fails (no correlation), the failure theory is wrong and the next node tests the harmonic expansion directly with per-unit spectra from a single forward pass of each unit (allowed here: this is analysis, not the capability protocol)."
+}

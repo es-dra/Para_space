@@ -39,12 +39,14 @@ def fit(images: np.ndarray, steps=2000, lr=1e-3, hidden=32, hidden_layers=1, ome
     X = np.broadcast_to(grid(H), (B, N, 2)).astype(np.float64)
     T = images.reshape(B, N, 1).astype(np.float64)
     M = None if masks is None else masks.reshape(B, N, 1).astype(np.float64)
-    dims = [2] + [hidden] * (hidden_layers + 1) + [1]
     rng = np.random.default_rng(seed)
     if init is None:
+        dims = [2] + [hidden] * (hidden_layers + 1) + [1]
         P = _init(B, dims, omega, rng)
     else:
         P = {k: np.stack([p[k] for p in init]).astype(np.float64) for k in init[0]}
+        Lm = sum(1 for k in init[0] if k.startswith("W"))
+        dims = [init[0]["W1"].shape[0]] + [init[0][f"W{k}"].shape[1] for k in range(1, Lm + 1)]
     L = len(dims) - 1
     m = {k: np.zeros_like(v) for k, v in P.items()}
     v = {k: np.zeros_like(x) for k, x in P.items()}
