@@ -154,3 +154,39 @@ def dog_transfer(sigma1_pix, sigma2_pix, side=28):
     """Difference of Gaussians (band-pass)."""
     g1, g2 = gaussian_transfer(sigma1_pix, side), gaussian_transfer(sigma2_pix, side)
     return lambda W: g1(W) - g2(W)
+
+
+# ----------------------------------------------------------------------------- independent-phase statistics
+def unit_phase_statistics(eff: dict):
+    """Closed-form statistics of the last sine layer's units under the independent-phase model
+    (theta_i uniform and independent; exact in the limit of incommensurate frequencies on a large domain),
+    from the Jacobi-Anger expansion of sin(c + sum_i a_i sin theta_i):
+        mean      = sin c * prod_k J0(a_k)
+        E[sin^2]  = 1/2 - 1/2 cos(2c) prod_k J0(2 a_k)
+        fundamental amplitude along sin theta_i = 2 J1(a_i) prod_{k != i} J0(a_k) cos c
+    Returns dict with mean, variance, fundamental energy, and F = fundamental energy / variance (per unit).
+    For L = 2 (plane-wave units) F = 1 by definition."""
+    from scipy.special import j0, j1
+    L = _last(eff)
+    if L == 2:
+        n = eff["A1"].shape[1]
+        return {"mean": np.zeros(n), "var": np.full(n, 0.5), "fund": np.full(n, 0.5), "F": np.ones(n)}
+    A = eff[f"A{L - 1}"]                      # (in, units): a_ij
+    c = eff[f"c{L - 1}"]
+    J0 = j0(A)
+    P0 = np.prod(J0, axis=0)                  # prod_k J0(a_k) per unit
+    mean = np.sin(c) * P0
+    e2 = 0.5 - 0.5 * np.cos(2 * c) * np.prod(j0(2 * A), axis=0)
+    var = np.maximum(e2 - mean ** 2, 1e-18)
+    # prod_{k != i} J0(a_k) = P0 / J0(a_i) when J0(a_i) != 0; use log-sum for stability
+    with np.errstate(divide="ignore", invalid="ignore"):
+        logP = np.sum(np.log(np.abs(J0) + 1e-300), axis=0)
+        Pexcl = np.exp(logP[None, :] - np.log(np.abs(J0) + 1e-300)) * np.sign(P0)[None, :] * np.sign(J0)
+    amp = 2 * j1(A) * Pexcl * np.cos(c)[None, :]
+    fund = 0.5 * np.sum(amp ** 2, axis=0)
+    F = np.clip(fund / var, 0, 1)
+    return {"mean": mean, "var": var, "fund": fund, "F": F}
+
+
+def fundamental_fraction(eff: dict) -> np.ndarray:
+    return unit_phase_statistics(eff)["F"]

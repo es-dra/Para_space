@@ -1,0 +1,33 @@
+{
+ "version": "claude-20261105-wsinr-wsaug-v1",
+ "status": "frozen before training any classifier (the zoo is being built)",
+ "question": "Do exact weight-space programs give useful data augmentation for weight-space learning? Classifiers that read INR weights (NFN, NFT, graph metanetworks) are data-hungry and reach far lower accuracy on INR zoos than pixel classifiers on the images; existing weight-space augmentations are permutations and mixup, which do not change the represented image. Coordinate-layer and readout programs produce the weights of a genuinely transformed image (shift, flip, rotation, zoom, contrast, brightness) exactly, at any depth, for the cost of a matrix product.",
+ "data": {
+  "train": "zoo/mnist_s32_train5k: 5,000 SIRENs (2-32-32-1) on MNIST train images 0..4999, PyTorch trainer, 2,000 Adam steps, seed = 0 + chunk offset",
+  "test": "zoo/mnist_s32_test1k: 1,000 SIRENs on MNIST test images 1000..1999 (disjoint from every earlier zoo, which used test 0..59)",
+  "subsets": "training-set sizes 500, 1,000, 2,000, 5,000 (nested), 3 classifier seeds each"
+ },
+ "augmentations": {
+  "programs": "random translation by (dy, dx) ~ U(-2, 2) pixels (continuous, exact on the function: c1 -= d A1), horizontal flip with p = 0.5 (A1[1,:] *= -1), rotation by U(-15, 15) degrees (A1 <- R A1), zoom U(0.9, 1.1) (A1 /= z), contrast U(0.8, 1.25) and brightness U(-0.1, 0.1) on the readout",
+  "control_permute": "random hidden-unit permutations and sign flips of both hidden layers (function-preserving; the standard weight-space augmentation)",
+  "none": "no augmentation"
+ },
+ "classifiers": {
+  "deepsets2": "a two-level permutation-invariant network written for this study: layer-1 units are embedded from their (frequency vector, phase); layer-2 units from their bias, their readout weight and a DeepSets pooling over their incoming weights paired with the layer-1 unit embeddings; a final DeepSets pooling over layer-2 units. Invariant to both hidden permutations; sign-flip symmetry handled by canonicalising each unit's sign (largest incoming weight positive).",
+  "aligned_mlp": "weights aligned to one reference network with wsinr.align, flattened, 2-hidden-layer MLP (the naive baseline)",
+  "training": "AdamW, 60 epochs, lr 1e-3 with cosine decay, batch 64, cross-entropy, label = MNIST digit; test accuracy at the last epoch"
+ },
+ "predictions_frozen_before_running": {
+  "G1_programs_help": "With 1,000 training INRs, program augmentation raises deepsets2 test accuracy by at least 5 points over no augmentation (mean of 3 seeds).",
+  "G2_better_than_permutation": "Program augmentation beats permutation/sign-flip augmentation by at least 3 points at 1,000 training INRs (permutations are exact symmetries of an invariant model and should add little).",
+  "G3_data_efficiency": "deepsets2 with programs at 1,000 INRs matches or exceeds deepsets2 without augmentation at 2,000 INRs.",
+  "G4_also_for_the_naive_model": "aligned_mlp gains at least 3 points from program augmentation at 1,000 INRs.",
+  "G5_gap_closes_with_data": "The gain of programs over no augmentation at 5,000 INRs is smaller than at 500 (augmentation matters most in the small-data regime)."
+ },
+ "controls": [
+  "pixel-space upper reference: a small CNN on the rendered images of the same INRs, with and without the same image-space augmentations, to show what the augmentation is worth when applied to pixels",
+  "augmentation applied on the fly per batch, fresh parameters each epoch",
+  "test INRs never augmented; test images disjoint from all earlier zoos"
+ ],
+ "decision_rule": "If G1-G3 hold, weight-space augmentation is the paper's application pillar and is extended to Fashion-MNIST and to a CIFAR colour zoo on GPU. If G1 fails, the permutation-invariant model is already saturated on this zoo and the experiment moves to the harder CIFAR zoo before any conclusion."
+}

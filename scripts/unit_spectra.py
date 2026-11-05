@@ -54,6 +54,13 @@ def main():
         nu2_pred = programs.unit_rms_frequency(eff)[-1]
         Hidx = programs.harmonic_index(eff)
         g_pred = np.exp(-0.5 * nu2_pred * sig ** 2)
+        stats_ip = programs.unit_phase_statistics(eff)
+        # first-order program: recompute the last sine layer with attenuated inputs
+        eff_fo = programs.input_attenuation_blur(eff, a.sigma, side)
+        h2 = coords
+        for k in range(1, L):
+            h2 = np.sin(h2 @ eff_fo[f"A{k}"] + eff_fo[f"c{k}"])
+        Hfo = h2.reshape(N, N, -1)
         for j in range(H.shape[2]):
             u = H[:, :, j] - H[:, :, j].mean()
             U = np.fft.fft2(u)
@@ -68,8 +75,12 @@ def main():
             # best possible per-unit scalar (oracle attenuation for this unit)
             s_best = float(np.sum(ub * H[:, :, j]) / (np.sum(H[:, :, j] ** 2) + 1e-12))
             err_best = float(np.sum((ub - s_best * H[:, :, j]) ** 2) / (np.sum(ub ** 2) + 1e-12))
+            err_fo = float(np.sum((ub - Hfo[:, :, j]) ** 2) / (np.sum(ub ** 2) + 1e-12))
+            var_meas = float(np.var(H[:, :, j]))
             rows.append({"net": os.path.basename(f), "unit": j, "nu2_pred": float(nu2_pred[j]), "nu2_true": nu2_true,
                          "H": float(Hidx[j]), "spread": spread, "err_rule": err, "err_best_scalar": err_best,
+                         "err_first_order": err_fo, "F": float(stats_ip["F"][j]), "var_pred": float(stats_ip["var"][j]),
+                         "var_meas": var_meas, "mean_pred": float(stats_ip["mean"][j]), "mean_meas": float(H[:, :, j].mean()),
                          "readout_w": float(abs(eff[f"A{L}"][j, 0]))})
     R = {k: np.array([r[k] for r in rows]) for k in rows[0] if k not in ("net",)}
     summary = {
@@ -83,6 +94,11 @@ def main():
         "spearman_H_vs_spread": float(stats.spearmanr(R["H"], R["spread"])[0]),
         "spearman_spread_vs_err_best_scalar": float(stats.spearmanr(R["spread"], R["err_best_scalar"])[0]),
         "H_quantiles": [float(x) for x in np.percentile(R["H"], [5, 25, 50, 75, 95])],
+        "median_err_first_order": float(np.median(R["err_first_order"])),
+        "spearman_1mF_vs_err_first_order": float(stats.spearmanr(1 - R["F"], R["err_first_order"])[0]),
+        "spearman_H_vs_err_first_order": float(stats.spearmanr(R["H"], R["err_first_order"])[0]),
+        "F_quantiles": [float(x) for x in np.percentile(R["F"], [5, 25, 50, 75, 95])],
+        "share_var_within_1.5x_H_ge_1": float(np.mean((np.maximum(R["var_pred"], R["var_meas"]) / np.maximum(np.minimum(R["var_pred"], R["var_meas"]), 1e-18) < 1.5)[R["H"] >= 1])) if np.any(R["H"] >= 1) else None,
     }
     json.dump({"zoo": a.zoo, "sigma": a.sigma, "summary": summary, "units": rows}, open(a.out, "w"), indent=1)
     print(json.dumps(summary, indent=1))
