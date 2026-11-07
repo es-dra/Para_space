@@ -10,7 +10,7 @@ shift-invariant filter** (Gaussian, box footprint, motion, derivative, Laplacian
 exact per-unit edit `A2_i *= |G(w_i)|, c1_i += arg G(w_i)`. Depth destroys this: after standard training the
 units of a deep SIREN swing 9-18 radians through the sine and are broadband, no per-unit scalar blurs them,
 and a weight-only harmonic index predicts which units fail. The price of keeping the dictionary programmable is
-large for a standalone image INR (about 35-40 dB at matched parameters on MNIST and Fashion-MNIST) because the
+about 7-10 dB at matched parameters in the compression regime (tens of dB when networks interpolate small images) because the
 compression that depth buys comes from the same harmonics; it should be small where the capacity lives in an
 encoder, as in arbitrary-scale super-resolution decoders.
 
