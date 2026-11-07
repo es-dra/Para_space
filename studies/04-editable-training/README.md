@@ -54,3 +54,14 @@ error on digits but only about 50% on clothing textures, and at a bound of 8 the
 textures while roughly breaking even on strokes. The write-up states the curve per dataset and does not claim a
 universal operating point. Bound 2 (29 dB, 85% of the error removed) is the setting that behaves the same on
 both datasets.
+
+## Caveat added 2026-11-08: these are interpolation-regime numbers
+
+Every zoo above has at least as many weights as pixels (1,185-4,097 weights for 784 pixels; the shallow family
+is the exception only by construction of the readout), and training is full-batch. The deep networks therefore
+*interpolate* the image (60-74 dB), which is not the regime INRs are used in (parameters well below pixels, about
+30-40 dB on Kodak-scale images). The direction of the gap is expected to persist, its magnitude is not: the
+"35-42 dB price" is a property of this regime. Stage 09 re-measures the price, and the harmonic index of trained
+deep networks, with parameters below pixels (128 x 128 crops, ratio 0.12-0.27; 256 x 256 on GPU later). Until
+those numbers are in, the price should be quoted with the regime attached. The exactness results (LSI programs,
+anti-aliasing) do not depend on the regime.

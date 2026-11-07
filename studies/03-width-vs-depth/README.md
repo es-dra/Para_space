@@ -70,3 +70,14 @@ stage does not test that; it is the prediction for the stage after the ICME subm
 Same recipe, Fashion-MNIST test images 0..19 (`results/fashion_replication.json`): 2-384-1 (1,537 weights)
 24.4 dB [23.7, 28.7]; 2-16-16-1 (337 weights) 26.8 dB [25.9, 29.4]; 2-32-32-1 (1,185 weights) 66.3 dB
 [59.4, 72.4]. The matched-parameter gap is 42 dB and the small deep network again beats the large shallow one.
+
+## Caveat added 2026-11-08: these are interpolation-regime numbers
+
+Every zoo above has at least as many weights as pixels (1,185-4,097 weights for 784 pixels; the shallow family
+is the exception only by construction of the readout), and training is full-batch. The deep networks therefore
+*interpolate* the image (60-74 dB), which is not the regime INRs are used in (parameters well below pixels, about
+30-40 dB on Kodak-scale images). The direction of the gap is expected to persist, its magnitude is not: the
+"35-42 dB price" is a property of this regime. Stage 09 re-measures the price, and the harmonic index of trained
+deep networks, with parameters below pixels (128 x 128 crops, ratio 0.12-0.27; 256 x 256 on GPU later). Until
+those numbers are in, the price should be quoted with the regime attached. The exactness results (LSI programs,
+anti-aliasing) do not depend on the regime.
