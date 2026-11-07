@@ -15,7 +15,7 @@ from wsinr.render import grid
 from wsinr.zoo import fit as torch_fit
 from wsinr.zoo_np import fit as np_fit
 
-SIDE = 64
+SIDE = 64  # overridden by --side
 
 
 def crops(folder, n=20, side=SIDE, min_std=0.08):
@@ -31,12 +31,14 @@ def crops(folder, n=20, side=SIDE, min_std=0.08):
     return np.stack(out[:n])
 
 
-def render_eff(eff, side=SIDE, clip=False):
+def render_eff(eff, side=None, clip=False):
+    side = side or SIDE
     img = siren.forward_effective(eff, grid(side)).reshape(side, side)
     return np.clip(img, 0, 1) if clip else img
 
 
-def fine_target(eff, transfer_fn, side=SIDE, up=8):
+def fine_target(eff, transfer_fn, side=None, up=8):
+    side = side or SIDE
     t = np.linspace(-1, 1, side)
     step = t[1] - t[0]
     pad = 6 * step
@@ -48,7 +50,8 @@ def fine_target(eff, transfer_fn, side=SIDE, up=8):
     return Fb[np.ix_(idx, idx)]
 
 
-def footprint_truth(eff, factor, side=SIDE, up=8):
+def footprint_truth(eff, factor, side=None, up=8):
+    side = side or SIDE
     step = 2.0 / (side - 1)
     n_out = side // factor
     t = -1 - step / 2 + (np.arange(n_out * factor * up) + 0.5) * step / up
@@ -60,7 +63,8 @@ def footprint_truth(eff, factor, side=SIDE, up=8):
     return truth, centres
 
 
-def sample(eff, centres, k, factor, side=SIDE):
+def sample(eff, centres, k, factor, side=None):
+    side = side or SIDE
     step = 2.0 / (side - 1)
     offs = (np.arange(k) + 0.5) / k - 0.5
     vals = np.zeros((len(centres), len(centres)))
@@ -81,13 +85,16 @@ def main():
     ap.add_argument("--n", type=int, default=20)
     ap.add_argument("--steps", type=int, default=3000)
     ap.add_argument("--zoos", nargs="*", default=["deep_h64", "shallow_w1024", "deep_h64x3", "shallow_w2048", "deep_h64_swing2", "deep_h64_swing4"])
+    ap.add_argument("--side", type=int, default=64)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
+    global SIDE
+    SIDE = a.side
     torch.set_num_threads(2)
-    X = crops(a.images, a.n)
+    X = crops(a.images, a.n, side=a.side)
     print("crops", X.shape, flush=True)
     specs = {"deep_h64": (64, 1, 0), "deep_h64x3": (64, 2, 0), "shallow_w1024": (1024, 0, 0), "shallow_w2048": (2048, 0, 0),
-             "deep_h64_swing2": (64, 1, 2.0), "deep_h64_swing4": (64, 1, 4.0)}
+             "deep_h64_swing2": (64, 1, 2.0), "deep_h64_swing4": (64, 1, 4.0), "deep_h32x3": (32, 2, 0), "shallow_w512": (512, 0, 0)}
     results = {}
     os.makedirs(a.out, exist_ok=True)
     for name in a.zoos:

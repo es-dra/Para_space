@@ -19,5 +19,15 @@
   "N3_antialias": "On shallow_w1024 at x4, the program (1 spp) beats 4x4 supersampling (16 spp) by at least 15 dB.",
   "N4_bounded_cost": "deep_h64_swing4 is within 5 dB of deep_h64 in PSNR and its first-order blur ratio is at most 0.4; deep_h64_swing2 is within 10 dB and at most 0.2.",
   "N5_standard_deep_not_programmable": "deep_h64 first-order blur ratio is at least 0.7."
+ },
+ "amendment_2026-11-08_compression_regime": {
+  "reason": "The 64 x 64 crops have 4,096 pixels against 4,417-8,577 weights, so the deep networks interpolate (47-60 dB) and the 20-33 dB gap is a memorisation-regime number, not a representative one. INR fitting in practice runs with parameters well below pixels (about 30-40 dB on Kodak-scale images).",
+  "design": "Same 20 images, 128 x 128 centre crops (16,384 pixels): deep_h64 (4,417 weights, ratio 0.27), deep_h32x3 (2,273 weights, ratio 0.14), shallow_w1024 (4,097, ratio 0.25), shallow_w512 (2,049, ratio 0.125); 3,000 Adam steps; n = 10 crops to fit CPU time. 256 x 256 (ratio 0.03-0.07) deferred to GPU.",
+  "predictions_frozen_before_running": {
+   "C1_gap_persists_smaller": "deep_h64 exceeds shallow_w1024 by at least 4 dB and at most 15 dB median PSNR at 128 x 128 (the gap shrinks from 20 dB but does not close); deep_h32x3 exceeds shallow_w512 by at least 2 dB.",
+   "C2_absolute_range": "deep_h64 median PSNR lies between 27 and 38 dB at 128 x 128 (a representative INR number); shallow_w1024 between 19 and 26 dB.",
+   "C3_harmonic_regime_persists": "deep networks in the compression regime still have median H >= 6 and first-order blur ratio >= 0.7: the failure of layer-local programs is not an artefact of interpolation.",
+   "C4_exactness_unchanged": "shallow programs stay below 1e-4 x no-edit error and the anti-aliasing program beats 4 x 4 supersampling by at least 15 dB."
+  }
  }
 }
