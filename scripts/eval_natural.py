@@ -18,6 +18,14 @@ from wsinr.zoo_np import fit as np_fit
 SIDE = 64  # overridden by --side
 
 
+def fwd(eff, coords, chunk=65536):
+    """forward_effective in row chunks (a 1.25M x 1024 float64 activation matrix is 10 GB otherwise)."""
+    out = np.empty((coords.shape[0], 1))
+    for i in range(0, coords.shape[0], chunk):
+        out[i:i + chunk] = siren.forward_effective(eff, coords[i:i + chunk])
+    return out
+
+
 def crops(folder, n=20, side=SIDE, min_std=0.08):
     out = []
     for f in sorted(glob.glob(os.path.join(folder, "*"))):
@@ -33,7 +41,7 @@ def crops(folder, n=20, side=SIDE, min_std=0.08):
 
 def render_eff(eff, side=None, clip=False):
     side = side or SIDE
-    img = siren.forward_effective(eff, grid(side)).reshape(side, side)
+    img = fwd(eff, grid(side)).reshape(side, side)
     return np.clip(img, 0, 1) if clip else img
 
 
@@ -44,7 +52,7 @@ def fine_target(eff, transfer_fn, side=None, up=8):
     pad = 6 * step
     tf = np.arange(-1 - pad, 1 + pad + 1e-9, step / up)
     yy, xx = np.meshgrid(tf, tf, indexing="ij")
-    F = siren.forward_effective(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(tf), len(tf))
+    F = fwd(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(tf), len(tf))
     Fb = transfer_fn(F, up)
     idx = np.round((t - tf[0]) / (step / up)).astype(int)
     return Fb[np.ix_(idx, idx)]
@@ -56,7 +64,7 @@ def footprint_truth(eff, factor, side=None, up=8):
     n_out = side // factor
     t = -1 - step / 2 + (np.arange(n_out * factor * up) + 0.5) * step / up
     yy, xx = np.meshgrid(t, t, indexing="ij")
-    F = siren.forward_effective(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(t), len(t))
+    F = fwd(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(t), len(t))
     blk = factor * up
     truth = F.reshape(n_out, blk, n_out, blk).mean(axis=(1, 3))
     centres = -1 - step / 2 + (np.arange(n_out) + 0.5) * factor * step
@@ -71,7 +79,7 @@ def sample(eff, centres, k, factor, side=None):
     for oy in offs:
         for ox in offs:
             yy, xx = np.meshgrid(centres + oy * factor * step, centres + ox * factor * step, indexing="ij")
-            vals += siren.forward_effective(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(centres), len(centres))
+            vals += fwd(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(centres), len(centres))
     return vals / (k * k)
 
 
@@ -114,6 +122,7 @@ def main():
             else:
                 pc, _ = torch_fit(Xc, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, seed=s0)
             params += pc
+        np.savez(os.path.join(a.out, f"{name}_params.npz"), **{f"{i}_{k}": v for i, p in enumerate(params) for k, v in p.items()})
         rows = []
         for i, p in enumerate(params):
             eff = siren.to_effective(p)
