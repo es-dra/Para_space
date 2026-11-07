@@ -1,0 +1,23 @@
+{
+ "version": "claude-20261107-wsinr-natural-v1",
+ "status": "frozen before running",
+ "question": "Do the stage-03 price, the stage-03 exactness and the stage-08 anti-aliasing results hold on natural image content at a higher resolution than MNIST?",
+ "data": "15 OpenCV sample images (lena, baboon, fruits, board, building, butterfly, starry_night, HappyFish, messi5, chicky_512, sudoku, aero1, aero3, left01, home), converted to grey, two 64 x 64 crops per image (centre and a quarter-offset crop) that are not flat (std > 0.08): the first 20 such crops in file order.",
+ "zoos": {
+  "deep_h64": "2-64-64-1, 4,417 weights",
+  "deep_h64x3": "2-64-64-64-1, 8,577 weights",
+  "shallow_w1024": "2-1024-1, 4,097 weights (exactly programmable)",
+  "shallow_w2048": "2-2048-1, 8,193 weights",
+  "deep_h64_swing2": "2-64-64-1 with swing bound 2",
+  "deep_h64_swing4": "2-64-64-1 with swing bound 4",
+  "recipe": "PyTorch trainer (NumPy for the swing-bounded ones), 3,000 Adam steps at 1e-3, omega 30, first-layer init U(-1/2, 1/2) x 30"
+ },
+ "measurements": "fit PSNR; Gaussian blur (1 px) and box footprint (4 px) programs on the function-space target (8x supersampled); anti-aliased x4 downsampling: point sampling, program, 2x2 and 4x4 supersampling against the footprint truth (stage-08 protocol at side 64)",
+ "predictions_frozen_before_running": {
+  "N1_price_persists": "At both parameter levels the deep family exceeds the shallow family by at least 4 dB median PSNR (the gap is expected to be smaller than on MNIST, whose digits are unusually compressible by composition).",
+  "N2_programs_exact": "On both shallow zoos the Gaussian and box programs have function-space MSE below 1e-4 x no-edit MSE on every crop.",
+  "N3_antialias": "On shallow_w1024 at x4, the program (1 spp) beats 4x4 supersampling (16 spp) by at least 15 dB.",
+  "N4_bounded_cost": "deep_h64_swing4 is within 5 dB of deep_h64 in PSNR and its first-order blur ratio is at most 0.4; deep_h64_swing2 is within 10 dB and at most 0.2.",
+  "N5_standard_deep_not_programmable": "deep_h64 first-order blur ratio is at least 0.7."
+ }
+}
