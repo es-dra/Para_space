@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 
 from wsinr import siren, wsl
+from wsinr.nfn_layers import NFNClassifier, effective_to_ws
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
     ap.add_argument("--test", required=True)
     ap.add_argument("--n-train", type=int, default=1000)
     ap.add_argument("--n-test", type=int, default=1000)
-    ap.add_argument("--model", choices=["deepsets2", "neuralgraph", "aligned_mlp"], default="neuralgraph")
+    ap.add_argument("--model", choices=["deepsets2", "neuralgraph", "aligned_mlp", "nfn"], default="nfn")
     ap.add_argument("--aug", choices=["none", "programs", "permute"], default="none")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=60)
@@ -43,14 +44,19 @@ def main():
     Etr, Ete = wsl.stack(tr_effs), wsl.stack(te_effs)
     ytr_t, yte_t = torch.tensor(ytr), torch.tensor(yte)
     n_params = sum(v[0].numel() for v in Etr.values())
-    model = {"deepsets2": lambda: wsl.DeepSets2(d=a.width), "neuralgraph": lambda: wsl.NeuralGraph(d=a.width)}.get(a.model, lambda: wsl.AlignedMLP(n_params))()
+    dims = [Etr["A1"].shape[1]] + [Etr[f"A{k}"].shape[2] for k in range(1, 1 + sum(1 for k in Etr if k.startswith("A")))]
+    model = {"deepsets2": lambda: wsl.DeepSets2(d=a.width), "neuralgraph": lambda: wsl.NeuralGraph(d=a.width),
+             "nfn": lambda: NFNClassifier(dims, c=a.width)}.get(a.model, lambda: wsl.AlignedMLP(n_params))()
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
     steps = a.epochs * int(np.ceil(len(ytr) / a.batch))
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
     lossf = nn.CrossEntropyLoss()
 
+    def fwd(E):
+        return model(*effective_to_ws(E)) if a.model == "nfn" else model(E)
+
     def prep(E):
-        return wsl.canonicalize_signs(E) if a.model in ("deepsets2", "neuralgraph") else E
+        return wsl.canonicalize_signs(E) if a.model in ("deepsets2", "neuralgraph", "nfn") else E
 
     def evaluate():
         model.eval()
@@ -58,7 +64,7 @@ def main():
             correct = 0
             for i in range(0, len(yte), 256):
                 Eb = {k: v[i:i + 256] for k, v in Ete.items()}
-                correct += (model(prep(Eb)).argmax(1) == yte_t[i:i + 256]).sum().item()
+                correct += (fwd(prep(Eb)).argmax(1) == yte_t[i:i + 256]).sum().item()
         model.train()
         return correct / len(yte)
 
@@ -76,7 +82,7 @@ def main():
                 Eb = wsl.augment_permute(Eb, rng=rng)
             if a.model == "aligned_mlp" and a.aug == "programs":
                 pass  # programs act on layer 1 and the readout only; alignment of hidden units is unchanged
-            loss = lossf(model(prep(Eb)), ytr_t[idx])
+            loss = lossf(fwd(prep(Eb)), ytr_t[idx])
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
