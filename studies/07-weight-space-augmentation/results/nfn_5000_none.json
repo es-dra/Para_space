@@ -1,0 +1,53 @@
+{
+ "config": {
+  "train": "zoo/mnist_s32_train5k",
+  "test": "zoo/mnist_s32_test1k",
+  "n_train": 5000,
+  "n_test": 1000,
+  "model": "nfn",
+  "aug": "none",
+  "seed": 0,
+  "epochs": 60,
+  "batch": 64,
+  "lr": 0.001,
+  "threads": 2,
+  "width": 32,
+  "out": "/tmp/claude-0/-home-user-para-space/6428c47a-5e7d-5d42-b0e8-31eaa92ea584/scratchpad/nfn_5000_none.json"
+ },
+ "n_train": 5000,
+ "n_test": 1000,
+ "final_test_acc": 0.247,
+ "history": [
+  {
+   "epoch": 10,
+   "loss": 2.1252547608146184,
+   "test_acc": 0.183
+  },
+  {
+   "epoch": 20,
+   "loss": 2.030782722219636,
+   "test_acc": 0.222
+  },
+  {
+   "epoch": 30,
+   "loss": 1.9175154589399506,
+   "test_acc": 0.234
+  },
+  {
+   "epoch": 40,
+   "loss": 1.8135781167428704,
+   "test_acc": 0.232
+  },
+  {
+   "epoch": 50,
+   "loss": 1.7514113972458658,
+   "test_acc": 0.254
+  },
+  {
+   "epoch": 60,
+   "loss": 1.7211053039454207,
+   "test_acc": 0.247
+  }
+ ],
+ "seconds": 2970.994834423065
+}
