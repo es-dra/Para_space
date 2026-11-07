@@ -86,6 +86,46 @@ def fig_qualitative(out, k=2):
     fig.savefig(os.path.join(out, "fig_qualitative.png"), dpi=160)
 
 
+def fig_antialias(out, k=3, factor=4):
+    """Downsampling x4 of a one-sine-layer SIREN: point sampling, the footprint program, 4x4 supersampling, truth."""
+    import importlib
+    ea = importlib.import_module("scripts.eval_antialias") if False else None
+    from wsinr import programs as P
+    f = sorted(glob.glob("zoo/mnist_shallow64/*.npz"))[k]
+    p, _ = siren.load_npz(f)
+    eff = siren.to_effective(p)
+    side, up = 28, 8
+    step = 2.0 / (side - 1)
+    n_out = side // factor
+    t = -1 - step / 2 + (np.arange(n_out * factor * up) + 0.5) * step / up
+    yy, xx = np.meshgrid(t, t, indexing="ij")
+    F = siren.forward_effective(eff, np.stack([yy.ravel(), xx.ravel()], 1)).reshape(len(t), len(t))
+    truth = F.reshape(n_out, factor * up, n_out, factor * up).mean(axis=(1, 3))
+    centres = -1 - step / 2 + (np.arange(n_out) + 0.5) * factor * step
+
+    def samp(e, kk):
+        offs = (np.arange(kk) + 0.5) / kk - 0.5
+        v = np.zeros((n_out, n_out))
+        for oy in offs:
+            for ox in offs:
+                Y, X = np.meshgrid(centres + oy * factor * step, centres + ox * factor * step, indexing="ij")
+                v += siren.forward_effective(e, np.stack([Y.ravel(), X.ravel()], 1)).reshape(n_out, n_out)
+        return v / kk ** 2
+    ep = P.lsi_filter(eff, P.box_transfer(factor, factor))
+    panels = [(render(p, 28, clip=False)[..., 0], "network (28 x 28)"), (samp(eff, 1), "point sampling, 1 spp"),
+              (samp(eff, 4), "4 x 4 supersampling, 16 spp"), (samp(ep, 1), "footprint program, 1 spp"), (truth, "footprint mean (truth)")]
+    fig, axes = plt.subplots(1, 5, figsize=(10, 2.4))
+    for ax, (img, lab) in zip(axes, panels):
+        ax.imshow(np.clip(img, 0, 1), cmap="gray", vmin=0, vmax=1, interpolation="nearest")
+        if img.shape == truth.shape and "truth" not in lab:
+            lab += f"\n{10 * np.log10(1 / max(np.mean((img - truth) ** 2), 1e-12)):.0f} dB"
+        ax.set_title(lab, fontsize=7)
+        ax.set_xticks([]); ax.set_yticks([])
+    fig.tight_layout()
+    fig.savefig(os.path.join(out, "fig_antialias.pdf"))
+    fig.savefig(os.path.join(out, "fig_antialias.png"), dpi=160)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="paper/figures")
@@ -93,6 +133,7 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     fig_width_depth(a.out)
     fig_qualitative(a.out)
+    fig_antialias(a.out)
     print("figures written to", a.out)
 
 
