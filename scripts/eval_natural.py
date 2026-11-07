@@ -86,6 +86,7 @@ def main():
     ap.add_argument("--steps", type=int, default=3000)
     ap.add_argument("--zoos", nargs="*", default=["deep_h64", "shallow_w1024", "deep_h64x3", "shallow_w2048", "deep_h64_swing2", "deep_h64_swing4"])
     ap.add_argument("--side", type=int, default=64)
+    ap.add_argument("--chunk", type=int, default=0, help="fit this many crops at a time (memory); 0 = all at once")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     global SIDE
@@ -95,15 +96,24 @@ def main():
     print("crops", X.shape, flush=True)
     specs = {"deep_h64": (64, 1, 0), "deep_h64x3": (64, 2, 0), "shallow_w1024": (1024, 0, 0), "shallow_w2048": (2048, 0, 0),
              "deep_h64_swing2": (64, 1, 2.0), "deep_h64_swing4": (64, 1, 4.0), "deep_h32x3": (32, 2, 0), "shallow_w512": (512, 0, 0)}
-    results = {}
     os.makedirs(a.out, exist_ok=True)
+    rpath = os.path.join(a.out, "results.json")
+    results = json.load(open(rpath)) if os.path.exists(rpath) else {}
     for name in a.zoos:
         hidden, hl, bound = specs[name]
         t0 = time.time()
-        if bound > 0:
-            params, mse = np_fit(X, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, swing_bound=bound)
-        else:
-            params, mse = torch_fit(X, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl)
+        if name in results and len(results[name].get("rows", [])) == len(X):
+            print(name, "already done, skipping", flush=True)
+            continue
+        params = []
+        ch = a.chunk or len(X)
+        for s0 in range(0, len(X), ch):
+            Xc = X[s0:s0 + ch]
+            if bound > 0:
+                pc, _ = np_fit(Xc, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, swing_bound=bound, seed=s0)
+            else:
+                pc, _ = torch_fit(Xc, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, seed=s0)
+            params += pc
         rows = []
         for i, p in enumerate(params):
             eff = siren.to_effective(p)
