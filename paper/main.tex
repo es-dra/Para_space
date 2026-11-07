@@ -120,6 +120,14 @@ standard & 61.5 & 1.63 & 66.3 & --\\\bottomrule
 \end{tabular}
 \end{table}
 
+\section{Natural images, and the regime question}
+\label{sec:natural}
+% Numbers below from studies/09-natural-images (64 x 64 crops, 20 images). The 128 x 128 compression-regime run
+% (parameters below pixels) is in progress; its table replaces the second paragraph when it lands.
+On twenty $64\times64$ grey crops of standard test images the picture is the same as on digits: $2$-$64$-$64$-$1$ ($4{,}417$ weights) fits to $46.9$\,dB and $2$-$64$-$64$-$64$-$1$ to $59.9$\,dB, while $2$-$1024$-$1$ and $2$-$2048$-$1$ ($4{,}097$ and $8{,}193$ weights) stop at $26.5$ and $26.6$\,dB; the shallow programs stay exact ($3\times10^{-7}$ of the no-edit error for blur, $5\times10^{-7}$ for the box footprint), the anti-aliasing program reaches $95.8$\,dB against $59.7$ for $4\times4$ supersampling, and the deep networks' first-order programs fail ($1.4$--$2.6\times$ the no-edit error, $H=12$--$21$).
+
+These crops have fewer pixels ($4{,}096$) than the deep networks have weights, so the deep PSNRs are interpolation numbers. The compression regime, with weights well below pixels, is where INRs are used and where the price must be quoted; we re-measure the gap and the harmonic index there at $128\times128$ (weight-to-pixel ratios $0.12$--$0.27$) under a registered amendment, and defer $256\times256$ to GPU. The exactness and anti-aliasing results are regime-independent.
+
 \section{What programmability buys: prefiltered rendering as a weight edit}
 \label{sec:aa}
 Rendering an INR on a coarser grid by evaluating it at the new pixel centres aliases; the correct value is the mean of the function over each output pixel's footprint. On a programmable dictionary the box-footprint program of Table~\ref{tab:lsi} makes point sampling of the \emph{edited} network equal to footprint integration of the original, for any footprint, isotropic or not. Table~\ref{tab:aa} compares it with supersampling against the footprint mean computed from an $8\times$ oversampled rendering. On one-sine-layer networks the program reaches $85$\,dB at one sample per pixel where $4\times4$ supersampling reaches $49$\,dB at sixteen (Figure~\ref{fig:aa}); on depth-3 networks trained with the swing bound $B=2$ the first-order program gains $8$\,dB over point sampling but stays $22$\,dB below $4\times4$ supersampling (a registered prediction that failed), and on standard deep networks it does nothing. This is the cleanest statement of what the programmable class offers: a rendering primitive that is exact where supersampling only converges, at a cost of one weight edit per footprint.
