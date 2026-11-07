@@ -21,13 +21,14 @@ def main():
     ap.add_argument("--test", required=True)
     ap.add_argument("--n-train", type=int, default=1000)
     ap.add_argument("--n-test", type=int, default=1000)
-    ap.add_argument("--model", choices=["deepsets2", "aligned_mlp"], default="deepsets2")
+    ap.add_argument("--model", choices=["deepsets2", "neuralgraph", "aligned_mlp"], default="neuralgraph")
     ap.add_argument("--aug", choices=["none", "programs", "permute"], default="none")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--batch", type=int, default=64)
-    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--lr", type=float, default=2e-3)
     ap.add_argument("--threads", type=int, default=2)
+    ap.add_argument("--width", type=int, default=64)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
@@ -42,14 +43,14 @@ def main():
     Etr, Ete = wsl.stack(tr_effs), wsl.stack(te_effs)
     ytr_t, yte_t = torch.tensor(ytr), torch.tensor(yte)
     n_params = sum(v[0].numel() for v in Etr.values())
-    model = wsl.DeepSets2() if a.model == "deepsets2" else wsl.AlignedMLP(n_params)
+    model = {"deepsets2": lambda: wsl.DeepSets2(d=a.width), "neuralgraph": lambda: wsl.NeuralGraph(d=a.width)}.get(a.model, lambda: wsl.AlignedMLP(n_params))()
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
     steps = a.epochs * int(np.ceil(len(ytr) / a.batch))
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
     lossf = nn.CrossEntropyLoss()
 
     def prep(E):
-        return wsl.canonicalize_signs(E) if a.model == "deepsets2" else E
+        return wsl.canonicalize_signs(E) if a.model in ("deepsets2", "neuralgraph") else E
 
     def evaluate():
         model.eval()

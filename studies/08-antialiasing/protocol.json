@@ -1,0 +1,23 @@
+{
+ "version": "claude-20261107-wsinr-antialias-v1",
+ "status": "frozen before running",
+ "question": "Rendering an INR at a coarser grid by point sampling aliases; the correct output is the mean over each output pixel's footprint. For a programmable dictionary the box-footprint program (stage 03, exact for one sine layer; first-order for bounded deep nets) turns prefiltering into a weight edit, after which point sampling IS footprint integration. How much aliasing error does it remove, against the cost-matched alternative of supersampling?",
+ "setup": {
+  "zoos": "mnist_shallow64 (L=2, exact program), mnist_s32_swing2 (deep, first-order program), mnist_s32 (standard deep, program expected to fail), 20 networks each",
+  "reference": "ground-truth footprint mean: render the continuous function at 8x the fine 28-grid (224 samples per side over the domain, uniform spacing), average over the output pixel's footprint for downscale factors 2, 4 and 7 (14, 7 and 4 output pixels per side)",
+  "methods": {
+   "point": "evaluate the original network at the output pixel centres (1 sample per output pixel; aliased)",
+   "program": "edit the weights with box_transfer(c, c) for footprint c = factor pixels of the 28-grid, then evaluate at the centres (1 sample per output pixel)",
+   "supersample_k": "average k x k point samples per output pixel of the original network, k = 2 and 4 (4 and 16 samples per pixel)",
+   "first_order_deep": "for deep nets, the program is input_attenuation with the box transfer applied to the first layer's plane waves"
+  },
+  "metric": "PSNR of each method against the ground-truth footprint mean, per network, median over 20; also the relative energy of the aliasing error"
+ },
+ "predictions_frozen_before_running": {
+  "AA1_shallow_exact": "On the one-sine-layer zoo, program PSNR exceeds 60 dB at every factor (exact up to the reference's own discretisation), while point sampling is below 30 dB at factor 4.",
+  "AA2_beats_supersampling": "On the one-sine-layer zoo, the program (1 sample per pixel) beats 4 x 4 supersampling (16 samples per pixel) by at least 10 dB at factor 4.",
+  "AA3_bounded_deep": "On swing-2 deep nets the first-order program improves over point sampling by at least 6 dB at factor 4 and stays within 6 dB of 4 x 4 supersampling.",
+  "AA4_standard_deep_fails": "On standard deep nets the first-order program does not improve over point sampling by more than 1 dB at factor 4."
+ },
+ "why_it_matters": "Prefiltered (mip-mapped) rendering of neural fields otherwise needs supersampling or architecture-specific tricks (integrated positional encodings, cone tracing); on a programmable dictionary it is a weight edit computed once per footprint, and anisotropic footprints are the same edit with different (c_y, c_x)."
+}

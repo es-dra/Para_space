@@ -142,3 +142,67 @@ class AlignedMLP(nn.Module):
 
 def align_batch(effs, ref):
     return [align(siren.from_effective(ref), siren.from_effective(e))[0] for e in effs]
+
+
+class NeuralGraph(nn.Module):
+    """Edge-conditioned message passing over the layered graph of a SIREN (any depth).
+
+    Nodes: 2 input coordinates, every hidden unit, the output. Node input features: bias (hidden/output) and a
+    layer-type one-hot. Edge features: the effective weight. K rounds of bidirectional messages
+    m = MLP([h_src, h_dst, w, |w|]), mean- and max-aggregated, with residual GRU-free updates. Readout: mean and
+    max over hidden nodes plus the output node. Invariant to hidden-unit permutations; the sign symmetry is
+    removed by canonicalize_signs before the forward pass."""
+
+    def __init__(self, d: int = 64, rounds: int = 3, n_classes: int = 10, n_layer_types: int = 5):
+        super().__init__()
+        self.d, self.rounds = d, rounds
+        self.embed = nn.Linear(1 + n_layer_types, d)
+        self.msg_f = nn.ModuleList([nn.Sequential(nn.Linear(2 * d + 2, d), nn.ReLU(), nn.Linear(d, d)) for _ in range(rounds)])
+        self.msg_b = nn.ModuleList([nn.Sequential(nn.Linear(2 * d + 2, d), nn.ReLU(), nn.Linear(d, d)) for _ in range(rounds)])
+        self.upd = nn.ModuleList([nn.Sequential(nn.Linear(5 * d, d), nn.ReLU(), nn.Linear(d, d)) for _ in range(rounds)])
+        self.norm = nn.ModuleList([nn.LayerNorm(d) for _ in range(rounds)])
+        self.head = nn.Sequential(nn.Linear(3 * d, d), nn.ReLU(), nn.Linear(d, n_classes))
+
+    def _nodes(self, E):
+        L = max(int(k[1:]) for k in E if k.startswith("A"))
+        B = E["A1"].shape[0]
+        feats, groups = [], []
+        feats.append(torch.zeros(B, E["A1"].shape[1], 1))                       # inputs: no bias
+        groups.append(0)
+        for k in range(1, L + 1):
+            feats.append(E[f"c{k}"].unsqueeze(-1) / (20.0 if k < L else 1.0))   # hidden biases are phases (~20 rad)
+            groups.append(min(k, 4))
+        return feats, groups, L
+
+    def forward(self, E: dict):
+        feats, groups, L = self._nodes(E)
+        B = E["A1"].shape[0]
+        hs = []
+        for f, g in zip(feats, groups):
+            onehot = torch.zeros(B, f.shape[1], 5)
+            onehot[:, :, g] = 1.0
+            hs.append(self.embed(torch.cat([f, onehot], dim=-1)))
+        Ws = [E[f"A{k}"] / (15.0 if k == 1 else 1.0) for k in range(1, L + 1)]  # (B, n_{k-1}, n_k)
+        for r in range(self.rounds):
+            new = []
+            for li in range(len(hs)):
+                parts = [hs[li]]
+                if li < L:   # messages from the next layer (backward along edges li -> li+1)
+                    W = Ws[li]                                                   # (B, n_li, n_li+1)
+                    src, dst = hs[li + 1].unsqueeze(1).expand(-1, W.shape[1], -1, -1), hs[li].unsqueeze(2).expand(-1, -1, W.shape[2], -1)
+                    m = self.msg_b[r](torch.cat([src, dst, W.unsqueeze(-1), W.abs().unsqueeze(-1)], dim=-1))
+                    parts += [m.mean(dim=2), m.amax(dim=2)]
+                else:
+                    parts += [torch.zeros_like(hs[li])] * 2
+                if li > 0:   # messages from the previous layer (forward along edges li-1 -> li)
+                    W = Ws[li - 1]                                               # (B, n_li-1, n_li)
+                    src, dst = hs[li - 1].unsqueeze(2).expand(-1, -1, W.shape[2], -1), hs[li].unsqueeze(1).expand(-1, W.shape[1], -1, -1)
+                    m = self.msg_f[r](torch.cat([src, dst, W.unsqueeze(-1), W.abs().unsqueeze(-1)], dim=-1))
+                    parts += [m.mean(dim=1), m.amax(dim=1)]
+                else:
+                    parts += [torch.zeros_like(hs[li])] * 2
+                new.append(self.norm[r](hs[li] + self.upd[r](torch.cat(parts, dim=-1))))
+            hs = new
+        hidden = torch.cat(hs[1:L], dim=1)                                          # all hidden nodes
+        pooled = torch.cat([hidden.mean(dim=1), hidden.amax(dim=1), hs[L].mean(dim=1)], dim=-1)
+        return self.head(pooled)

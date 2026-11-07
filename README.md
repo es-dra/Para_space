@@ -24,6 +24,10 @@ harness in `wsinr/harness/`); the research line is the programs themselves.
 | `studies/01-sandbox` | sandbox-protocol LLM measurement | frozen, deferred |
 | `studies/02-programs` | programs by layer and depth; harmonic failure mechanism; readout ceilings | done |
 | `studies/03-width-vs-depth` | the price of programmability; LSI completeness | done |
+| `studies/04-editable-training` | swing-bound training: a monotone fit-vs-programmability curve (two datasets, two seeds) | done |
+| `studies/06-theory` | readout-programmability characterisation; validated unit statistics; the error law in the harmonic index | done |
+| `studies/07-weight-space-augmentation` | exact programs as data augmentation for weight-space classifiers | in progress |
+| `studies/08-antialiasing` | prefiltered rendering as a weight edit vs supersampling | done |
 
 ## Tasks
 
