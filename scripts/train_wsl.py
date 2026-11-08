@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--lr", type=float, default=2e-3)
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--width", type=int, default=64)
+    ap.add_argument("--device", default="cpu")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
@@ -47,12 +48,15 @@ def main():
     dims = [Etr["A1"].shape[1]] + [Etr[f"A{k}"].shape[2] for k in range(1, 1 + sum(1 for k in Etr if k.startswith("A")))]
     model = {"deepsets2": lambda: wsl.DeepSets2(d=a.width), "neuralgraph": lambda: wsl.NeuralGraph(d=a.width),
              "nfn": lambda: NFNClassifier(dims, c=a.width)}.get(a.model, lambda: wsl.AlignedMLP(n_params))()
+    dev = torch.device(a.device)
+    model = model.to(dev)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=1e-4)
     steps = a.epochs * int(np.ceil(len(ytr) / a.batch))
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
     lossf = nn.CrossEntropyLoss()
 
     def fwd(E):
+        E = {k: v.to(dev) for k, v in E.items()}
         return model(*effective_to_ws(E)) if a.model == "nfn" else model(E)
 
     def prep(E):
@@ -64,7 +68,7 @@ def main():
             correct = 0
             for i in range(0, len(yte), 256):
                 Eb = {k: v[i:i + 256] for k, v in Ete.items()}
-                correct += (fwd(prep(Eb)).argmax(1) == yte_t[i:i + 256]).sum().item()
+                correct += (fwd(prep(Eb)).argmax(1).cpu() == yte_t[i:i + 256]).sum().item()
         model.train()
         return correct / len(yte)
 
@@ -82,7 +86,7 @@ def main():
                 Eb = wsl.augment_permute(Eb, rng=rng)
             if a.model == "aligned_mlp" and a.aug == "programs":
                 pass  # programs act on layer 1 and the readout only; alignment of hidden units is unchanged
-            loss = lossf(fwd(prep(Eb)), ytr_t[idx])
+            loss = lossf(fwd(prep(Eb)), ytr_t[idx].to(dev))
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()

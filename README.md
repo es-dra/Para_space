@@ -28,6 +28,8 @@ harness in `wsinr/harness/`); the research line is the programs themselves.
 | `studies/06-theory` | readout-programmability characterisation; validated unit statistics; the error law in the harmonic index | done |
 | `studies/07-weight-space-augmentation` | exact programs as data augmentation for weight-space classifiers | in progress |
 | `studies/08-antialiasing` | prefiltered rendering as a weight edit vs supersampling | done |
+| `studies/09-natural-images` | the same results on natural crops; interpolation vs compression regime | done |
+| `studies/10-gpu-scale` | 256 x 256 Kodak, matched pairs up to 33k weights; 10k-zoo augmentation grid (`scripts/gpu/run_scale.sh`) | protocol frozen, awaiting GPU |
 
 ## Tasks
 

@@ -1,0 +1,44 @@
+{
+ "version": "claude-20261108-wsinr-gpu-scale-v1",
+ "status": "frozen before running; to be executed on the user's GPU server with scripts/gpu/run_scale.sh",
+ "question": "Do the three regime-independent results (exact LSI programs, harmonic failure of deep networks, anti-aliasing as a weight edit) and the compression-regime price survive at 256 x 256 (weights / pixels 0.03-0.5) on standard natural-image test sets, and does the exact program algebra help weight-space learning once the zoo is large enough for a permutation-equivariant classifier to fit?",
+ "A_natural_256": {
+  "data": "Kodak (24 images, 768 x 512) and, if present, DIV2K validation 0801-0900 as 256 x 256 grey crops (centre and quarter-offset, std > 0.08); n = 24 crops for the main table, n = 48 for the two cheapest zoos (sensitivity).",
+  "zoos_matched_pairs": {
+   "4k": ["deep_h64 (2-64-64-1, 4,417)", "shallow_w1024 (4,097)"],
+   "17k": ["deep_h128 (2-128-128-1, 17,025)", "shallow_w4096 (16,385)"],
+   "33k": ["deep_h128x3 (2-128-128-128-1, 33,537)", "shallow_w8192 (32,769)"],
+   "bounded": ["deep_h128_swing2", "deep_h128_swing4 (2-128-128-1, swing bound 2 and 4, PyTorch projection)"]
+  },
+  "recipe": "3,000 Adam steps at 1e-3, omega 30, PyTorch trainer on GPU; function-space references 4x supersampled; anti-aliased x4 downsampling as in stage 08.",
+  "predictions_frozen_before_running": {
+   "S1_gap_persists": "At every matched pair the deep network exceeds the shallow one by at least 3 dB and at most 12 dB median PSNR.",
+   "S2_gap_not_growing_with_compression": "The 4k-pair gap at 256 x 256 (ratio 0.07) is not larger than the 128 x 128 gap of the same pair (9.5 dB) plus 1 dB.",
+   "S3_absolute_range": "deep_h128x3 median PSNR lies between 26 and 36 dB; deep_h64 between 21 and 30 dB; shallow_w1024 between 15 and 23 dB.",
+   "S4_harmonic_regime": "Every unbounded deep zoo has median harmonic index H >= 6 and first-order blur ratio >= 0.7.",
+   "S5_exactness": "On every shallow zoo the Gaussian and box programs have function-space MSE below 1e-4 x no-edit MSE on every crop, and the anti-aliasing program (1 spp) beats 4 x 4 supersampling (16 spp) by at least 15 dB median.",
+   "S6_bounded_cost": "deep_h128_swing4 is within 6 dB of deep_h128 with first-order blur ratio <= 0.5; deep_h128_swing2 is within 12 dB with ratio <= 0.25. (Stage 09 failed the stricter N4; this is the re-stated, weaker claim and it is allowed to fail again.)",
+   "S7_width_saturates": "Within the shallow family, each doubling of width gains at most 1.0 dB median PSNR at 256 x 256."
+  }
+ },
+ "B_weight_space_augmentation": {
+  "data": "MNIST SIREN zoo 2-32-32-1, 2,000 steps, 10,000 training networks and 1,000 test networks (scripts/build_big_zoo.py on GPU); same recipe as the stage-07 5k zoo.",
+  "models": "own NP/HNP NFN classifier (wsinr/nfn_layers.py, c = 64 and 128), DeepSets2 and aligned MLP as references; 3 seeds; n_train in {1000, 2000, 5000, 10000}; augmentation none / programs (exact translation, flip, rotation, zoom, contrast, brightness) / permute.",
+  "predictions_frozen_before_running": {
+   "W1_capacity": "NFN c=128 with no augmentation reaches at least 60 % test accuracy at n = 10,000 (otherwise the classifier, not the augmentation, is the bottleneck and W2-W4 are void).",
+   "W2_programs_help_small_n": "At n = 1,000 the programs augmentation beats none by at least 2.0 points (mean of 3 seeds) for the NFN.",
+   "W3_programs_help_large_n": "At n = 10,000 the programs augmentation beats none by at least 0.5 points for the NFN.",
+   "W4_programs_vs_permute": "Programs are at least as good as permutation augmentation at every n for the NFN (permutation is a symmetry the NFN already has, so it should add nothing)."
+  }
+ },
+ "C_colour": {
+  "data": "CIFAR-10 test set, 1,000 images, RGB SIREN 2-64-64-3 vs 2-1024-3 (out_dim 3); the LSI programs act per channel with the same per-unit scalars.",
+  "status": "requires an RGB loader (wsinr/data.py) and out_dim = 3 in scripts/eval_natural.py; not part of run_scale.sh v1",
+  "prediction": "CP1: the shallow programs stay exact (< 1e-4 x no-edit) on colour; the deep/shallow gap at matched parameters is between 2 and 10 dB."
+ },
+ "D_second_family": {
+  "status": "not started: Gabor (WIRE) and Gaussian activations have a different per-unit transfer; the readout characterisation (stage 06) says they are not LSI-programmable through the readout alone. A positive result would need a new program, not a rerun.",
+  "prediction": "none frozen"
+ },
+ "compute_budget": "Part A: about 1-3 GPU-hours on a 24 GB card (shallow_w8192 at 256 x 256 needs chunk 1). Part B: zoo 10-20 GPU-minutes; grid 4 sizes x 3 augs x 3 seeds x 3 models at 60 epochs, about 6-10 GPU-hours. Part C: 1 GPU-hour once the loader exists."
+}

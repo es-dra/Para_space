@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--hidden-layers", type=int, default=1)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--device", default="cpu")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
@@ -38,7 +39,7 @@ def main():
     t0 = time.time()
     for start in range(a.offset, a.offset + a.n, a.chunk):
         idx = np.arange(start, min(start + a.chunk, a.offset + a.n))
-        params, mse = fit(x[idx], steps=a.steps, lr=a.lr, hidden=a.hidden, hidden_layers=a.hidden_layers, seed=a.seed + start)
+        params, mse = fit(x[idx], steps=a.steps, lr=a.lr, hidden=a.hidden, hidden_layers=a.hidden_layers, seed=a.seed + start, device=a.device)
         for i, p, m in zip(idx, params, mse):
             img = render(p, 28)[..., 0]
             fit_mse = float(np.mean((img - x[i]) ** 2))

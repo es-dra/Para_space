@@ -16,6 +16,7 @@ from wsinr.zoo import fit as torch_fit
 from wsinr.zoo_np import fit as np_fit
 
 SIDE = 64  # overridden by --side
+UP = 8
 
 
 def fwd(eff, coords, chunk=65536):
@@ -45,8 +46,9 @@ def render_eff(eff, side=None, clip=False):
     return np.clip(img, 0, 1) if clip else img
 
 
-def fine_target(eff, transfer_fn, side=None, up=8):
+def fine_target(eff, transfer_fn, side=None, up=None):
     side = side or SIDE
+    up = up or UP
     t = np.linspace(-1, 1, side)
     step = t[1] - t[0]
     pad = 6 * step
@@ -58,8 +60,9 @@ def fine_target(eff, transfer_fn, side=None, up=8):
     return Fb[np.ix_(idx, idx)]
 
 
-def footprint_truth(eff, factor, side=None, up=8):
+def footprint_truth(eff, factor, side=None, up=None):
     side = side or SIDE
+    up = up or UP
     step = 2.0 / (side - 1)
     n_out = side // factor
     t = -1 - step / 2 + (np.arange(n_out * factor * up) + 0.5) * step / up
@@ -95,15 +98,21 @@ def main():
     ap.add_argument("--zoos", nargs="*", default=["deep_h64", "shallow_w1024", "deep_h64x3", "shallow_w2048", "deep_h64_swing2", "deep_h64_swing4"])
     ap.add_argument("--side", type=int, default=64)
     ap.add_argument("--chunk", type=int, default=0, help="fit this many crops at a time (memory); 0 = all at once")
+    ap.add_argument("--device", default="cpu", help="torch device for fitting (cuda:0 on the server)")
+    ap.add_argument("--up", type=int, default=8, help="supersampling factor of the function-space references (4 is enough at 256x256)")
+    ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
-    global SIDE
-    SIDE = a.side
-    torch.set_num_threads(2)
+    global SIDE, UP
+    SIDE, UP = a.side, a.up
+    torch.set_num_threads(2 if a.device == "cpu" else 4)
     X = crops(a.images, a.n, side=a.side)
     print("crops", X.shape, flush=True)
     specs = {"deep_h64": (64, 1, 0), "deep_h64x3": (64, 2, 0), "shallow_w1024": (1024, 0, 0), "shallow_w2048": (2048, 0, 0),
-             "deep_h64_swing2": (64, 1, 2.0), "deep_h64_swing4": (64, 1, 4.0), "deep_h32x3": (32, 2, 0), "shallow_w512": (512, 0, 0)}
+             "deep_h64_swing2": (64, 1, 2.0), "deep_h64_swing4": (64, 1, 4.0), "deep_h32x3": (32, 2, 0), "shallow_w512": (512, 0, 0),
+             "deep_h128": (128, 1, 0), "deep_h128x3": (128, 2, 0), "deep_h256x3": (256, 2, 0),
+             "shallow_w4096": (4096, 0, 0), "shallow_w8192": (8192, 0, 0), "shallow_w16384": (16384, 0, 0),
+             "deep_h128_swing2": (128, 1, 2.0), "deep_h128_swing4": (128, 1, 4.0)}
     os.makedirs(a.out, exist_ok=True)
     rpath = os.path.join(a.out, "results.json")
     results = json.load(open(rpath)) if os.path.exists(rpath) else {}
@@ -117,10 +126,10 @@ def main():
         ch = a.chunk or len(X)
         for s0 in range(0, len(X), ch):
             Xc = X[s0:s0 + ch]
-            if bound > 0:
-                pc, _ = np_fit(Xc, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, swing_bound=bound, seed=s0)
+            if bound > 0 and a.device == "cpu":
+                pc, _ = np_fit(Xc, steps=a.steps, lr=a.lr, hidden=hidden, hidden_layers=hl, swing_bound=bound, seed=s0)
             else:
-                pc, _ = torch_fit(Xc, steps=a.steps, lr=1e-3, hidden=hidden, hidden_layers=hl, seed=s0)
+                pc, _ = torch_fit(Xc, steps=a.steps, lr=a.lr, hidden=hidden, hidden_layers=hl, seed=s0, device=a.device, swing_bound=bound)
             params += pc
         np.savez(os.path.join(a.out, f"{name}_params.npz"), **{f"{i}_{k}": v for i, p in enumerate(params) for k, v in p.items()})
         rows = []
@@ -132,7 +141,8 @@ def main():
             # blur 1 px and box 4 px, function-space targets
             tb = fine_target(eff, lambda F, up: ndimage.gaussian_filter(F, up, mode="nearest"))
             tx = fine_target(eff, lambda F, up: ndimage.uniform_filter(F, size=4 * up + 1, mode="nearest"))
-            Gb, Gx = programs.gaussian_transfer(1.0, SIDE), programs.box_transfer(4 * (4 * 8 + 1) / (4 * 8), 4 * (4 * 8 + 1) / (4 * 8), SIDE)
+            wbox = (4 * UP + 1) / UP                      # the odd discrete window in pixels
+            Gb, Gx = programs.gaussian_transfer(1.0, SIDE), programs.box_transfer(wbox, wbox, SIDE)
             if L == 2:
                 eb, ex = programs.lsi_filter(eff, Gb), programs.lsi_filter(eff, Gx)
             else:

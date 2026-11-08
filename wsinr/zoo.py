@@ -36,7 +36,7 @@ def forward_batched(P: dict, coords: torch.Tensor, omega=siren.OMEGA) -> torch.T
 
 
 def fit(images: np.ndarray, steps=1000, lr=1e-3, hidden=32, hidden_layers=1, omega=siren.OMEGA, seed=0,
-        device="cpu", init: dict | None = None, log_every=0):
+        device="cpu", init: dict | None = None, log_every=0, swing_bound: float = 0.0):
     """images: (B, H, W) in [0, 1]. Returns list of param dicts (numpy) and final per-network MSE."""
     B, H, W = images.shape
     assert H == W
@@ -54,6 +54,12 @@ def fit(images: np.ndarray, steps=1000, lr=1e-3, hidden=32, hidden_layers=1, ome
         per = ((pred - target) ** 2).mean(dim=(1, 2))
         per.sum().backward()
         opt.step()
+        if swing_bound > 0:
+            with torch.no_grad():
+                L = sum(1 for k in P if k.startswith("W"))
+                for k in range(2, L):
+                    s_unit = omega * P[f"W{k}"].abs().sum(dim=1, keepdim=True)
+                    P[f"W{k}"].mul_(torch.clamp(swing_bound / s_unit.clamp_min(1e-12), max=1.0))
         if log_every and (it + 1) % log_every == 0:
             print(f"step {it + 1}: mean mse {per.mean().item():.5f}  worst {per.max().item():.5f}", flush=True)
     with torch.no_grad():
