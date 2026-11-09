@@ -1,0 +1,123 @@
+{
+ "S1_gap_persists": {
+  "gaps_db": {
+   "4k": 6.058850596567222,
+   "17k": 9.191970275613496,
+   "33k": 16.076812768490626
+  },
+  "pass": false
+ },
+ "S2_gap_not_growing_with_compression": {
+  "gap_4k_256": 6.058850596567222,
+  "bound": 10.5,
+  "pass": true
+ },
+ "S3_absolute_range": {
+  "deep_h128x3": {
+   "psnr": 37.80639526511748,
+   "range": [
+    26,
+    36
+   ],
+   "pass": false
+  },
+  "deep_h64": {
+   "psnr": 27.773488542188282,
+   "range": [
+    21,
+    30
+   ],
+   "pass": true
+  },
+  "shallow_w1024": {
+   "psnr": 21.71463794562106,
+   "range": [
+    15,
+    23
+   ],
+   "pass": true
+  },
+  "pass": false
+ },
+ "S4_harmonic_regime": {
+  "deep_h64": {
+   "H": 32.833508975703964,
+   "blur_ratio": 1.0764747451002774
+  },
+  "deep_h128": {
+   "H": 55.73612467590357,
+   "blur_ratio": 1.0639729833452352
+  },
+  "deep_h128x3": {
+   "H": 29.294184850133835,
+   "blur_ratio": 1.0196808920006282
+  },
+  "pass": true
+ },
+ "S5_exactness": {
+  "shallow_w1024": {
+   "max_blur_ratio": 3.977900931252294e-07,
+   "max_box_ratio": 1.1896429192281225e-05,
+   "median_aa_program_minus_ss4": 23.532420446905903,
+   "pass": true
+  },
+  "shallow_w2048": {
+   "max_blur_ratio": 3.952867932345389e-07,
+   "max_box_ratio": 1.1864239287883015e-05,
+   "median_aa_program_minus_ss4": 23.53336541704438,
+   "pass": true
+  },
+  "shallow_w4096": {
+   "max_blur_ratio": 3.967086806000869e-07,
+   "max_box_ratio": 1.188242545859178e-05,
+   "median_aa_program_minus_ss4": 23.533430673712587,
+   "pass": true
+  },
+  "shallow_w8192": {
+   "max_blur_ratio": 3.9286550789428167e-07,
+   "max_box_ratio": 1.1843377167983074e-05,
+   "median_aa_program_minus_ss4": 23.535286033394684,
+   "pass": true
+  },
+  "pass": true
+ },
+ "S6_bounded_cost": {
+  "swing4": {
+   "drop_db": 7.476030098548954,
+   "blur_ratio": 0.5548283907301597,
+   "bounds": [
+    6,
+    0.5
+   ],
+   "pass": false
+  },
+  "swing2": {
+   "drop_db": 7.911605878580765,
+   "blur_ratio": 0.300229712593973,
+   "bounds": [
+    12,
+    0.25
+   ],
+   "pass": false
+  },
+  "pass": false
+ },
+ "S7_width_saturates": {
+  "psnr": [
+   21.71463794562106,
+   21.745645690710226,
+   21.8105199399191,
+   21.729582496626854
+  ],
+  "gains_per_doubling": [
+   0.03100774508916615,
+   0.06487424920887364,
+   -0.08093744329224606
+  ],
+  "pass": true
+ },
+ "sensitivity_n48": {
+  "n_crops": 46,
+  "gap_4k": 4.919929275354292
+ }
+}

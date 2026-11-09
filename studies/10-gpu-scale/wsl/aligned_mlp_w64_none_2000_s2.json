@@ -1,0 +1,54 @@
+{
+ "config": {
+  "train": "zoo/mnist_s32_train10k",
+  "test": "zoo/mnist_s32_test1k",
+  "n_train": 2000,
+  "n_test": 1000,
+  "model": "aligned_mlp",
+  "aug": "none",
+  "seed": 2,
+  "epochs": 60,
+  "batch": 64,
+  "lr": 0.002,
+  "threads": 2,
+  "width": 64,
+  "device": "cuda:0",
+  "out": "studies/10-gpu-scale/wsl/aligned_mlp_w64_none_2000_s2.json"
+ },
+ "n_train": 2000,
+ "n_test": 1000,
+ "final_test_acc": 0.105,
+ "history": [
+  {
+   "epoch": 10,
+   "loss": 1.7444885037839413,
+   "test_acc": 0.124
+  },
+  {
+   "epoch": 20,
+   "loss": 1.338725533336401,
+   "test_acc": 0.122
+  },
+  {
+   "epoch": 30,
+   "loss": 1.038705626502633,
+   "test_acc": 0.104
+  },
+  {
+   "epoch": 40,
+   "loss": 0.922544602304697,
+   "test_acc": 0.102
+  },
+  {
+   "epoch": 50,
+   "loss": 0.8444068431854248,
+   "test_acc": 0.104
+  },
+  {
+   "epoch": 60,
+   "loss": 0.8627345804125071,
+   "test_acc": 0.105
+  }
+ ],
+ "seconds": 2.7842063903808594
+}
