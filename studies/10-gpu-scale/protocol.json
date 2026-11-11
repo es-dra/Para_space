@@ -40,5 +40,18 @@
   "status": "not started: Gabor (WIRE) and Gaussian activations have a different per-unit transfer; the readout characterisation (stage 06) says they are not LSI-programmable through the readout alone. A positive result would need a new program, not a rerun.",
   "prediction": "none frozen"
  },
- "compute_budget": "Part A: about 1-3 GPU-hours on a 24 GB card (shallow_w8192 at 256 x 256 needs chunk 1). Part B: zoo 10-20 GPU-minutes; grid 4 sizes x 3 augs x 3 seeds x 3 models at 60 epochs, about 6-10 GPU-hours. Part C: 1 GPU-hour once the loader exists."
+ "compute_budget": "Part A: about 1-3 GPU-hours on a 24 GB card (shallow_w8192 at 256 x 256 needs chunk 1). Part B: zoo 10-20 GPU-minutes; grid 4 sizes x 3 augs x 3 seeds x 3 models at 60 epochs, about 6-10 GPU-hours. Part C: 1 GPU-hour once the loader exists.",
+ "B2_shared_init_amendment": {
+  "frozen": "2026-11-11, after part B and before any B2 grid run",
+  "why": "Part B failed W1 (NFN c=128, none, n=10k: 12.6%), so W2-W4 were void. Diagnosis (not part of any scored run): the zoo is sound (labels match MNIST, render MSE ~1e-6, an MLP on rendered INRs reaches 93.5%); (1) lr 2e-3 kills the c=128 NFN (loss stays at ln 10 with or without input standardisation or clipping); (2) with independent initialisations the same NFN at lr 5e-4 underfits (train 29% / test 27% at 30 epochs, 43% / 29.5% at 100 epochs), whereas on a zoo whose networks share one initialisation it reaches train 79% / test 71% at 30 epochs. Published NFN results use 10 initialisations per training image and 512 channels, which part B did not match.",
+  "change": "Same grid, models, augmentations, seeds, sizes and 60 epochs as part B, but (a) every SIREN in the train and test zoos starts from one common initialisation (init_batched seed 12345; scripts/build_big_zoo.py --shared-init), and (b) lr 5e-4 for every model instead of 2e-3. Results in wsl_shared/, scored with scripts/analyze_wsl.py --results studies/10-gpu-scale/wsl_shared.",
+  "caveat_known_before_running": "W1 is no longer a blind prediction: the diagnostic run above (30 epochs, c=128, n=10k, shared init) already reached 71%. W2-W4 are untested. Programs act on layer 1 and the readout, so they move a network off the shared-initialisation manifold in layer 1; this may make the augmentation less useful here than on independent inits.",
+  "predictions_frozen_before_running": {
+   "W1_capacity": "NFN c=128 with no augmentation reaches at least 60% test accuracy at n = 10,000.",
+   "W2_programs_help_small_n": "At n = 1,000 the programs augmentation beats none by at least 2.0 points (mean of 3 seeds) for the NFN.",
+   "W3_programs_help_large_n": "At n = 10,000 the programs augmentation beats none by at least 0.5 points for the NFN.",
+   "W4_programs_vs_permute": "Programs are at least as good as permutation augmentation at every n for the NFN."
+  },
+  "not_changed": "Thresholds W1-W4 are the part-B thresholds unchanged. The independent-initialisation result of part B stays reported as a failure; B2 does not replace it."
+ }
 }

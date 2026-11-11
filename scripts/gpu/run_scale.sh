@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Stage 10 on one GPU. Restartable: eval_natural skips finished zoos, build_big_zoo resumes with --offset,
 # train_wsl runs are skipped when their json exists.
-#   KODAK=Data/kodak MNIST=Data/mnist DEVICE=cuda:0 bash scripts/gpu/run_scale.sh [A|B|all]
+#   KODAK=Data/kodak MNIST=Data/mnist DEVICE=cuda:0 bash scripts/gpu/run_scale.sh [A|B|B2|all]
+# Part B2 can be split over GPUs: LANE=i NLANES=k runs every k-th job from i (LANE=0 builds the zoos; start it first).
 set -eu
 cd "$(dirname "$0")/../.."
 PART=${1:-all}
@@ -35,6 +36,31 @@ if [ "$PART" = B ] || [ "$PART" = all ]; then
       [ -f "$f" ] && continue
       python3 scripts/train_wsl.py --train zoo/mnist_s32_train10k --test zoo/mnist_s32_test1k --n-train "$n" --n-test 1000 \
         --model "$model" --aug "$aug" --seed "$seed" --epochs 60 --width "$width" --device "$DEVICE" --out "$f" > "${f%.json}.log" 2>&1
+    done
+  done; done; done; done
+fi
+if [ "$PART" = B2 ]; then
+  # Part B2 (amendment 2026-11-11): the B grid on a shared-initialisation zoo, lr 5e-4 for every model.
+  LANE=${LANE:-0}; NLANES=${NLANES:-1}
+  ZTR=zoo/mnist_s32_shared_train10k; ZTE=zoo/mnist_s32_shared_test1k
+  if [ "$LANE" = 0 ]; then
+    [ -f $ZTR/index.json ] && [ "$(ls $ZTR/*.npz | wc -l)" -ge 10000 ] || \
+      python3 scripts/build_big_zoo.py --mnist "$MNIST" --split train --n 10000 --chunk 1000 --shared-init --seed 12345 --device "$DEVICE" --out $ZTR
+    [ -f $ZTE/index.json ] || \
+      python3 scripts/build_big_zoo.py --mnist "$MNIST" --split test --n 1000 --chunk 1000 --shared-init --seed 12345 --device "$DEVICE" --out $ZTE
+    touch $ZTR.ready
+  else
+    until [ -f $ZTR.ready ]; do sleep 30; done
+  fi
+  R=$OUT/wsl_shared; mkdir -p "$R"; j=-1
+  for n in 1000 2000 5000 10000; do for model in nfn deepsets2 aligned_mlp; do for aug in none programs permute; do for seed in 0 1 2; do
+    for width in 64 128; do
+      [ "$model" = nfn ] || [ "$width" = 64 ] || continue
+      j=$((j + 1)); [ $((j % NLANES)) = "$LANE" ] || continue
+      f="$R/${model}_w${width}_${aug}_${n}_s${seed}.json"
+      [ -f "$f" ] && continue
+      python3 scripts/train_wsl.py --train $ZTR --test $ZTE --n-train "$n" --n-test 1000 \
+        --model "$model" --aug "$aug" --seed "$seed" --epochs 60 --lr 5e-4 --width "$width" --device "$DEVICE" --out "$f" > "${f%.json}.log" 2>&1
     done
   done; done; done; done
 fi
